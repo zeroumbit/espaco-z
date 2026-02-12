@@ -1,31 +1,99 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import styles from './page.module.css';
 
 type Step = 'modulo' | 'basico' | 'detalhes' | 'fotos';
 
 export default function NewSpaceWizard() {
     const router = useRouter();
+    const supabase = createClient();
     const [step, setStep] = useState<Step>('modulo');
+    const [loading, setLoading] = useState(false);
+    const [tenantId, setTenantId] = useState<string | null>(null);
+
     const [formData, setFormData] = useState({
-        module: '',
+        module: 'hospedagem',
         title: '',
-        propertyType: '',
-        city: '',
+        property_type: 'apartamento',
+        city: 'Fortaleza',
+        state: 'CE',
+        neighborhood: '',
         price: '',
         description: '',
+        bedrooms: 1,
+        bathrooms: 1,
+        max_guests: 2,
+        instant_booking: false,
+        check_in_time: '14:00',
+        check_out_time: '11:00',
+        min_nights: 1,
     });
 
-    const handleNext = () => {
+    useEffect(() => {
+        async function getTenant() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('tenant_id')
+                    .eq('user_id', user.id)
+                    .single();
+                setTenantId(profile?.tenant_id);
+            }
+        }
+        getTenant();
+    }, []);
+
+    const handleNext = async () => {
         if (step === 'modulo') setStep('basico');
         else if (step === 'basico') setStep('detalhes');
         else if (step === 'detalhes') setStep('fotos');
         else {
-            // Submit logic (mock)
-            console.log('Submitting:', formData);
+            await handleSubmit();
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!tenantId) {
+            alert('Erro: Tenant não identificado. Recarregue a página.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('spaces')
+                .insert({
+                    tenant_id: tenantId,
+                    module: formData.module,
+                    title: formData.title,
+                    description: formData.description,
+                    property_type: formData.property_type,
+                    city: formData.city,
+                    state: formData.state,
+                    neighborhood: formData.neighborhood,
+                    price: Number(formData.price),
+                    bedrooms: formData.bedrooms,
+                    bathrooms: formData.bathrooms,
+                    max_guests: formData.max_guests,
+                    check_in_time: formData.check_in_time,
+                    check_out_time: formData.check_out_time,
+                    min_nights: formData.min_nights,
+                    instant_booking: formData.instant_booking,
+                    status: 'ativo' // Publicado imediatamente para este exemplo
+                });
+
+            if (error) throw error;
+
             router.push('/dashboard/espacos');
+        } catch (err: any) {
+            console.error('Erro ao salvar anúncio:', err);
+            alert(`Erro: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -103,24 +171,45 @@ export default function NewSpaceWizard() {
                                 <label>Tipo de imóvel</label>
                                 <select
                                     className={styles.input}
-                                    value={formData.propertyType}
-                                    onChange={e => setFormData({ ...formData, propertyType: e.target.value })}
+                                    value={formData.property_type}
+                                    onChange={e => setFormData({ ...formData, property_type: e.target.value })}
                                 >
-                                    <option value="">Selecione...</option>
                                     <option value="apartamento">Apartamento</option>
                                     <option value="casa">Casa</option>
-                                    <option value="kitnet">Kitnet</option>
+                                    <option value="quarto">Quarto</option>
+                                    <option value="flat">Flat</option>
                                 </select>
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Cidade</label>
+                                <label>Bairro</label>
                                 <input
                                     type="text"
                                     className={styles.input}
-                                    placeholder="Ex: Fortaleza"
-                                    value={formData.city}
-                                    onChange={e => setFormData({ ...formData, city: e.target.value })}
+                                    placeholder="Ex: Meireles"
+                                    value={formData.neighborhood}
+                                    onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.row}>
+                            <div className={styles.formGroup}>
+                                <label>Quartos</label>
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    value={formData.bedrooms}
+                                    onChange={e => setFormData({ ...formData, bedrooms: Number(e.target.value) })}
+                                />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Hóspedes Max</label>
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    value={formData.max_guests}
+                                    onChange={e => setFormData({ ...formData, max_guests: Number(e.target.value) })}
                                 />
                             </div>
                         </div>
@@ -142,15 +231,26 @@ export default function NewSpaceWizard() {
                             />
                         </div>
 
-                        <div className={styles.formGroup}>
-                            <label>Preço {formData.module === 'hospedagem' ? '(por noite)' : formData.module === 'vendas' ? '(total)' : '(por mês)'}</label>
-                            <input
-                                type="number"
-                                className={styles.input}
-                                placeholder="R$ 0,00"
-                                value={formData.price}
-                                onChange={e => setFormData({ ...formData, price: e.target.value })}
-                            />
+                        <div className={styles.row}>
+                            <div className={styles.formGroup}>
+                                <label>Preço {formData.module === 'hospedagem' ? '(por noite)' : formData.module === 'vendas' ? '(total)' : '(por mês)'}</label>
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    placeholder="R$ 0,00"
+                                    value={formData.price}
+                                    onChange={e => setFormData({ ...formData, price: e.target.value })}
+                                />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Check-in</label>
+                                <input
+                                    type="text"
+                                    className={styles.input}
+                                    value={formData.check_in_time}
+                                    onChange={e => setFormData({ ...formData, check_in_time: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
                 )}
@@ -161,8 +261,8 @@ export default function NewSpaceWizard() {
                         <div className={styles.uploadArea}>
                             <div className={styles.uploadPlaceholder}>
                                 <span>📸</span>
-                                <p>Arraste fotos aqui ou clique para selecionar</p>
-                                <button className={styles.uploadBtn}>Escolher arquivos</button>
+                                <p>Para este MVP, as fotos serão adicionadas via painel de edição após a criação.</p>
+                                <p style={{ fontSize: '12px', color: 'var(--neutral-500)' }}>Estamos configurando o storage do Supabase.</p>
                             </div>
                         </div>
                     </div>
@@ -173,16 +273,16 @@ export default function NewSpaceWizard() {
                 <button
                     className={styles.backBtn}
                     onClick={handleBack}
-                    disabled={step === 'modulo'}
+                    disabled={step === 'modulo' || loading}
                 >
                     Voltar
                 </button>
                 <button
                     className={styles.nextBtn}
                     onClick={handleNext}
-                    disabled={step === 'modulo' && !formData.module}
+                    disabled={loading || (step === 'modulo' && !formData.module)}
                 >
-                    {step === 'fotos' ? 'Publicar Anúncio' : 'Continuar'}
+                    {loading ? 'Processando...' : step === 'fotos' ? 'Publicar Anúncio' : 'Continuar'}
                 </button>
             </footer>
         </div>

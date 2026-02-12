@@ -95,7 +95,7 @@ export default function Header() {
                                 <Link href="/login" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
                                     <span>🔑</span> Entrar
                                 </Link>
-                                <Link href="/cadastro" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
+                                <Link href="/anunciar" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
                                     <span>📝</span> Cadastrar-se
                                 </Link>
                             </div>

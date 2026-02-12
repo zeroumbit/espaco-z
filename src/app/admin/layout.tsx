@@ -34,12 +34,14 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 
     console.log('Cargo identificado no servidor:', profile?.role);
 
-    if (!profile || profile.role !== 'admin') {
-        console.log('Acesso negado: Não é admin. Redirecionando para dashboard.');
+    const isSuperAdminEmail = user.email === 'zeroumbit@gmail.com';
+
+    if (!profile || (profile.role !== 'admin' && !isSuperAdminEmail)) {
+        console.log(`Acesso negado para ${user.email}. Role: ${profile?.role}. Redirecionando para dashboard.`);
         redirect('/dashboard');
     }
 
-    console.log('Acesso concedido ao Super Admin!');
+    console.log('Acesso concedido ao Super Admin:', user.email);
     console.log('--------------------------');
 
     return (

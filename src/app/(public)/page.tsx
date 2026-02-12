@@ -20,7 +20,6 @@ export default function HomePage() {
                     title="Destaques"
                     subtitle="Os espaços mais bem avaliados e procurados"
                     spaces={destaques}
-                    viewAllHref="/hospedagem/destaques"
                 />
 
                 {/* Disponível agora */}
@@ -28,7 +27,6 @@ export default function HomePage() {
                     title="Disponível agora"
                     subtitle="Espaços prontos para reserva imediata"
                     spaces={todos}
-                    viewAllHref="/hospedagem/disponiveis"
                 />
 
                 {/* Novos anúncios */}
@@ -37,7 +35,6 @@ export default function HomePage() {
                         title="Novos anúncios"
                         subtitle="Acabaram de chegar na plataforma"
                         spaces={novos}
-                        viewAllHref="/hospedagem/novos"
                     />
                 )}
 

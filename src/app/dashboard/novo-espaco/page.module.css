@@ -1,0 +1,230 @@
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    margin-bottom: var(--space-8);
+    text-align: center;
+}
+
+.title {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--neutral-900);
+    margin-bottom: var(--space-6);
+}
+
+.progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.step {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--neutral-200);
+    color: var(--neutral-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: var(--text-sm);
+    transition: all var(--transition-base);
+}
+
+.activeStep {
+    background: var(--primary-600);
+    color: white;
+}
+
+.line {
+    width: 40px;
+    height: 2px;
+    background: var(--neutral-200);
+}
+
+.content {
+    flex: 1;
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    margin-bottom: var(--space-6);
+}
+
+.stepTitle {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--neutral-800);
+    margin-bottom: var(--space-6);
+    text-align: center;
+}
+
+/* Module Grid */
+.moduleGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+.moduleCard {
+    background: var(--neutral-50);
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.moduleCard:hover {
+    background: var(--neutral-100);
+    transform: translateY(-2px);
+}
+
+.selectedModule {
+    border-color: var(--primary-500);
+    background: var(--primary-50);
+}
+
+.selectedModule:hover {
+    background: var(--primary-50);
+}
+
+.icon {
+    font-size: var(--text-3xl);
+    margin-bottom: var(--space-3);
+    display: block;
+}
+
+.moduleCard h3 {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--neutral-900);
+    margin-bottom: var(--space-2);
+}
+
+.moduleCard p {
+    font-size: var(--text-xs);
+    color: var(--neutral-500);
+}
+
+/* Form */
+.formGroup {
+    margin-bottom: var(--space-4);
+}
+
+.formGroup label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--neutral-700);
+    margin-bottom: var(--space-2);
+}
+
+.input,
+.textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.input:focus,
+.textarea:focus {
+    border-color: var(--primary-500);
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+/* Upload */
+.uploadArea {
+    border: 2px dashed var(--neutral-300);
+    border-radius: var(--radius-lg);
+    padding: var(--space-10);
+    text-align: center;
+    background: var(--neutral-50);
+    transition: all var(--transition-fast);
+}
+
+.uploadArea:hover {
+    border-color: var(--primary-400);
+    background: var(--primary-50);
+}
+
+.uploadPlaceholder span {
+    font-size: var(--text-4xl);
+    display: block;
+    margin-bottom: var(--space-4);
+}
+
+.uploadPlaceholder p {
+    color: var(--neutral-500);
+    margin-bottom: var(--space-4);
+}
+
+.uploadBtn {
+    padding: var(--space-2) var(--space-4);
+    background: white;
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--neutral-200);
+}
+
+.backBtn {
+    padding: var(--space-3) var(--space-6);
+    background: transparent;
+    border: none;
+    color: var(--neutral-600);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.backBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nextBtn {
+    padding: var(--space-3) var(--space-8);
+    background: var(--primary-600);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.nextBtn:hover:not(:disabled) {
+    background: var(--primary-700);
+}
+
+.nextBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

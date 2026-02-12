@@ -1,0 +1,23 @@
+.layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--neutral-50);
+}
+
+.main {
+    flex: 1;
+    padding: var(--space-8);
+    overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+    .layout {
+        flex-direction: column;
+    }
+
+    .main {
+        padding: var(--space-4);
+    }
+
+    /* Responsividade da sidebar precisaria de mais ajustes (drawer mobile) */
+}

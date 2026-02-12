@@ -1,0 +1,202 @@
+.card {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-6));
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    padding: var(--space-6);
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.priceContainer {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.price {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--neutral-900);
+}
+
+.priceLabel {
+    font-size: var(--text-base);
+    color: var(--neutral-500);
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    font-size: var(--text-sm);
+    gap: 4px;
+}
+
+.star {
+    color: var(--module-color);
+}
+
+.ratingValue {
+    font-weight: 600;
+    color: var(--neutral-900);
+}
+
+.ratingCount {
+    color: var(--neutral-500);
+    text-decoration: underline;
+}
+
+/* Form Styles */
+.datePicker {
+    display: flex;
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    overflow: hidden;
+}
+
+.dateInputGroup {
+    flex: 1;
+    padding: var(--space-3);
+    border-right: 1px solid var(--neutral-300);
+}
+
+.dateInputGroup:last-child {
+    border-right: none;
+}
+
+.dateInputGroup label {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--neutral-800);
+    margin-bottom: 2px;
+}
+
+.dateInput {
+    width: 100%;
+    border: none;
+    font-size: var(--text-sm);
+    color: var(--neutral-600);
+    outline: none;
+}
+
+.guestSelector {
+    border: 1px solid var(--neutral-300);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.guestSelector label {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--neutral-800);
+    margin-bottom: 2px;
+}
+
+.select {
+    width: 100%;
+    border: none;
+    font-size: var(--text-sm);
+    color: var(--neutral-600);
+    outline: none;
+    background: transparent;
+}
+
+/* Buttons */
+.ctaButton {
+    width: 100%;
+    padding: var(--space-3);
+    background: linear-gradient(135deg, var(--module-color), color-mix(in srgb, var(--module-color) 80%, black));
+    color: white;
+    font-size: var(--text-base);
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+    margin-top: var(--space-2);
+}
+
+.ctaButton:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+}
+
+.secondaryButton {
+    width: 100%;
+    padding: var(--space-3);
+    background: white;
+    border: 1px solid var(--neutral-800);
+    color: var(--neutral-900);
+    font-size: var(--text-base);
+    font-weight: 600;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-top: var(--space-3);
+}
+
+.secondaryButton:hover {
+    background: var(--neutral-50);
+}
+
+.disclaimer {
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--neutral-500);
+    margin-top: var(--space-3);
+}
+
+.infoBox {
+    font-size: var(--text-sm);
+    color: var(--neutral-600);
+    background: var(--neutral-50);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+    line-height: 1.5;
+}
+
+/* Price Breakdown */
+.priceBreakdown {
+    margin-top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.breakdownRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-base);
+    color: var(--neutral-700);
+}
+
+.breakdownRow span:first-child {
+    text-decoration: underline;
+}
+
+.totalRow {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--neutral-200);
+    font-weight: 700;
+    color: var(--neutral-900);
+}
+
+.totalRow span:first-child {
+    text-decoration: none;
+}

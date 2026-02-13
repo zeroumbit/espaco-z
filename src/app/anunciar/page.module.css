@@ -173,6 +173,33 @@
     box-shadow: 0 0 0 4px var(--primary-50);
 }
 
+.passwordContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.passwordContainer input {
+    flex: 1;
+    padding-right: calc(var(--space-4) + 30px); /* Espaço para o botão de olho */
+}
+
+.togglePassword {
+    position: absolute;
+    right: var(--space-3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    color: var(--neutral-500);
+    transition: color var(--transition-fast);
+}
+
+.togglePassword:hover {
+    color: var(--neutral-700);
+}
+
 .radioGroup {
     display: flex;
     gap: var(--space-6);

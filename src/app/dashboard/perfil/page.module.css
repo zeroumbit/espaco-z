@@ -1,0 +1,200 @@
+.container {
+    padding: var(--space-8);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.title {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--neutral-900);
+    margin-bottom: var(--space-2);
+}
+
+.subtitle {
+    font-size: var(--text-base);
+    color: var(--neutral-600);
+    margin-bottom: var(--space-8);
+}
+
+.profileSection {
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    margin-bottom: var(--space-6);
+}
+
+.profileSection h2 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--neutral-800);
+    margin-bottom: var(--space-4);
+}
+
+.formGroup {
+    margin-bottom: var(--space-4);
+}
+
+.formGroup label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--neutral-700);
+    margin-bottom: var(--space-2);
+}
+
+.readOnlyInput {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-lg);
+    background: var(--neutral-50);
+    color: var(--neutral-600);
+    font-size: var(--text-base);
+}
+
+.readOnlyInput:focus {
+    outline: none;
+    border-color: var(--neutral-300);
+}
+
+.dangerZone {
+    background: var(--error-50);
+    border: 1px solid var(--error-200);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    margin-top: var(--space-8);
+}
+
+.dangerZone h2 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--error-800);
+    margin-bottom: var(--space-4);
+}
+
+.warningMessage {
+    background: var(--error-100);
+    border-left: 4px solid var(--error-500);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.warningMessage p {
+    color: var(--error-700);
+    margin: 0 0 var(--space-2) 0;
+}
+
+.warningMessage p:last-child {
+    margin-bottom: 0;
+}
+
+.securitySection {
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    margin-top: var(--space-6);
+}
+
+.securitySection h2 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--neutral-800);
+    margin-bottom: var(--space-4);
+}
+
+.passwordChangeForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.passwordContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.passwordContainer input {
+    flex: 1;
+    padding-right: calc(var(--space-4) + 30px); /* Espaço para o botão de olho */
+}
+
+.togglePassword {
+    position: absolute;
+    right: var(--space-3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    color: var(--neutral-500);
+    transition: color var(--transition-fast);
+}
+
+.togglePassword:hover {
+    color: var(--neutral-700);
+}
+
+.input {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-lg);
+    background: var(--neutral-0);
+    color: var(--neutral-800);
+    font-size: var(--text-base);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.changePasswordBtn {
+    background: var(--primary-600);
+    color: white;
+    border: none;
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: var(--text-base);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    width: fit-content;
+    margin-top: var(--space-2);
+}
+
+.changePasswordBtn:hover {
+    background: var(--primary-700);
+}
+
+.deleteAccountBtn {
+    background: var(--error-600);
+    color: white;
+    border: none;
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: var(--text-base);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.deleteAccountBtn:hover {
+    background: var(--error-700);
+}
+
+.loading, .error {
+    padding: var(--space-8);
+    text-align: center;
+    font-size: var(--text-lg);
+}
+
+.error {
+    color: var(--error-600);
+}

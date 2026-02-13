@@ -63,8 +63,8 @@ export default async function AdminLocalAdvertisersPage() {
                         {advertisers?.map((item) => (
                             <tr key={item.id}>
                                 <td>
-                                    <div style={{ fontWeight: 600 }}>{item.name}</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--neutral-500)' }}>{item.email || item.phone}</div>
+                                    <div className={styles.businessName}>{item.name}</div>
+                                    <div className={styles.businessContact}>{item.email || item.phone}</div>
                                 </td>
                                 <td>
                                     <span className={`${styles.badge} ${styles.categoryBadge}`}>

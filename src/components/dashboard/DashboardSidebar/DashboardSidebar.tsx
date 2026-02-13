@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import styles from './DashboardSidebar.module.css';
 
 const DASHBOARD_LINKS = [
@@ -15,6 +17,14 @@ const DASHBOARD_LINKS = [
 
 export default function DashboardSidebar() {
     const pathname = usePathname();
+    const router = useRouter();
+    const supabase = createClient();
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.refresh();
+        router.push('/');
+    };
 
     return (
         <aside className={styles.sidebar}>
@@ -42,7 +52,7 @@ export default function DashboardSidebar() {
             </nav>
 
             <div className={styles.footer}>
-                <button className={styles.logoutBtn}>
+                <button className={styles.logoutBtn} onClick={handleLogout}>
                     <span>🚪</span> Sair
                 </button>
             </div>

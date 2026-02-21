@@ -364,7 +364,7 @@ export default function RegisterAdvertiserPage() {
                                         setFormData({ ...formData, state: e.target.value });
                                         setFormData({ ...formData, city: '' }); // Limpa cidade ao mudar estado
                                     }}
-                                    className={styles.input}
+                                    className={styles.select}
                                     required
                                 >
                                     <option value="">Selecione...</option>

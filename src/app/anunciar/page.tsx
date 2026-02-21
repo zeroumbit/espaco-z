@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import styles from './page.module.css';
 import Link from 'next/link';
-import { buscarEnderecoPorCep } from '@/lib/location';
+import { buscarEnderecoPorCep, buscarCidadesPorEstadoIBGE } from '@/lib/location';
 import { Loader2 } from 'lucide-react';
 
 export default function RegisterAdvertiserPage() {
@@ -13,6 +13,8 @@ export default function RegisterAdvertiserPage() {
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [cepLoading, setCepLoading] = useState(false);
+    const [cityLoading, setCityLoading] = useState(false);
+    const [cities, setCities] = useState<string[]>([]);
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
@@ -59,6 +61,26 @@ export default function RegisterAdvertiserPage() {
             }
         }
     };
+
+    // Carregar cidades quando o estado mudar
+    useEffect(() => {
+        async function loadCities() {
+            if (!formData.state) {
+                setCities([]);
+                return;
+            }
+            setCityLoading(true);
+            try {
+                const data = await buscarCidadesPorEstadoIBGE(formData.state);
+                setCities(data.map(c => c.nome));
+            } catch (err) {
+                console.error('Erro ao carregar cidades:', err);
+            } finally {
+                setCityLoading(false);
+            }
+        }
+        loadCities();
+    }, [formData.state]);
     
     const [showPassword, setShowPassword] = useState(false);
 
@@ -338,7 +360,10 @@ export default function RegisterAdvertiserPage() {
                                 <label>Estado (UF)</label>
                                 <select
                                     value={formData.state}
-                                    onChange={e => setFormData({ ...formData, state: e.target.value })}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, state: e.target.value });
+                                        setFormData({ ...formData, city: '' }); // Limpa cidade ao mudar estado
+                                    }}
                                     className={styles.input}
                                     required
                                 >
@@ -374,17 +399,32 @@ export default function RegisterAdvertiserPage() {
                             </div>
                         </div>
 
-                        {/* Cidade ocupando toda largura */}
+                        {/* Cidade como SELECT ocupando toda largura */}
                         <div className={styles.field}>
                             <label>Cidade</label>
-                            <input
-                                type="text"
-                                placeholder="Digite sua cidade"
-                                value={formData.city}
-                                onChange={e => setFormData({ ...formData, city: e.target.value })}
-                                className={styles.input}
-                                required
-                            />
+                            <div className={styles.inputWrapper}>
+                                <select
+                                    value={formData.city}
+                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                    className={styles.input}
+                                    disabled={!formData.state || cityLoading}
+                                    required
+                                >
+                                    <option value="">
+                                        {!formData.state 
+                                            ? "Selecione o estado antes" 
+                                            : cityLoading 
+                                                ? "Carregando cidades..." 
+                                                : "Selecione sua cidade"}
+                                    </option>
+                                    {cities.map((cidade) => (
+                                        <option key={cidade} value={cidade}>
+                                            {cidade}
+                                        </option>
+                                    ))}
+                                </select>
+                                {cityLoading && <Loader2 className={styles.spinner} size={18} />}
+                            </div>
                         </div>
                     </div>
 

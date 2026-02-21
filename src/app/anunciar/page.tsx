@@ -5,11 +5,15 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import styles from './page.module.css';
 import Link from 'next/link';
+import { buscarEnderecoPorCep } from '@/lib/location';
+import { StateCitySelect } from '@/components/common';
+import { Loader2 } from 'lucide-react';
 
 export default function RegisterAdvertiserPage() {
     const router = useRouter();
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
+    const [cepLoading, setCepLoading] = useState(false);
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
@@ -26,11 +30,36 @@ export default function RegisterAdvertiserPage() {
         name: '', // Nome Fantasia
 
         // LOCALIZAÇÃO
-        city: 'Fortaleza',
-        state: 'CE',
+        cep: '',
+        city: '',
+        state: '',
 
         termsAccepted: true // Já vem marcado
     });
+
+    const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/\D/g, '').substring(0, 8);
+        const formatted = val.replace(/(\d{5})(\d)/, '$1-$2');
+        setFormData(prev => ({ ...prev, cep: formatted }));
+
+        if (val.length === 8) {
+            setCepLoading(true);
+            try {
+                const data = await buscarEnderecoPorCep(val);
+                if (data) {
+                    setFormData(prev => ({
+                        ...prev,
+                        city: data.city,
+                        state: data.state
+                    }));
+                }
+            } catch (err) {
+                console.error('Erro ao buscar CEP:', err);
+            } finally {
+                setCepLoading(false);
+            }
+        }
+    };
     
     const [showPassword, setShowPassword] = useState(false);
 
@@ -290,26 +319,27 @@ export default function RegisterAdvertiserPage() {
                     {/* LOCALIZAÇÃO */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>4. Localização</h3>
-                        <div className={styles.grid}>
-                            <div className={styles.field}>
-                                <label>Estado</label>
+                        
+                        <div className={styles.field} style={{ marginBottom: '0.5rem' }}>
+                            <label>CEP (Busca automática)</label>
+                            <div className={styles.inputWrapper}>
                                 <input
                                     type="text"
-                                    required
-                                    value={formData.state}
-                                    onChange={e => setFormData({ ...formData, state: e.target.value })}
+                                    placeholder="00000-000"
+                                    value={formData.cep}
+                                    onChange={handleCepChange}
+                                    className={styles.input}
                                 />
-                            </div>
-                            <div className={styles.field}>
-                                <label>Cidade</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.city}
-                                    onChange={e => setFormData({ ...formData, city: e.target.value })}
-                                />
+                                {cepLoading && <Loader2 className={styles.spinner} size={18} />}
                             </div>
                         </div>
+
+                        <StateCitySelect 
+                            selectedState={formData.state}
+                            selectedCity={formData.city}
+                            onStateChange={(state) => setFormData({ ...formData, state })}
+                            onCityChange={(city) => setFormData({ ...formData, city })}
+                        />
                     </div>
 
                     <div className={styles.termsWrapper}>

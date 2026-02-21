@@ -64,7 +64,6 @@ export default function RegisterAdvertiserPage() {
 
     // Carregar cidades quando o estado mudar
     useEffect(() => {
-        console.log('[useEffect] Estado mudou para:', formData.state);
         async function loadCities() {
             if (!formData.state) {
                 setCities([]);
@@ -73,7 +72,6 @@ export default function RegisterAdvertiserPage() {
             setCityLoading(true);
             try {
                 const data = await buscarCidadesPorEstadoIBGE(formData.state);
-                console.log('[useEffect] Cidades carregadas:', data.length);
                 setCities(data.map(c => c.nome));
             } catch (err) {
                 console.error('Erro ao carregar cidades:', err);
@@ -363,7 +361,6 @@ export default function RegisterAdvertiserPage() {
                                 <select
                                     value={formData.state}
                                     onChange={(e) => {
-                                        console.log('[Estado] onChange disparado, valor:', e.target.value);
                                         setFormData({ ...formData, state: e.target.value });
                                         setFormData({ ...formData, city: '' }); // Limpa cidade ao mudar estado
                                     }}

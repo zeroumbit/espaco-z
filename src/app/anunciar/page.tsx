@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import styles from './page.module.css';
 import Link from 'next/link';
 import { buscarEnderecoPorCep } from '@/lib/location';
-import { StateCitySelect } from '@/components/common';
 import { Loader2 } from 'lucide-react';
 
 export default function RegisterAdvertiserPage() {
@@ -319,27 +318,74 @@ export default function RegisterAdvertiserPage() {
                     {/* LOCALIZAÇÃO */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>4. Localização</h3>
-                        
-                        <div className={styles.field} style={{ marginBottom: '0.5rem' }}>
-                            <label>CEP (Busca automática)</label>
-                            <div className={styles.inputWrapper}>
-                                <input
-                                    type="text"
-                                    placeholder="00000-000"
-                                    value={formData.cep}
-                                    onChange={handleCepChange}
+
+                        {/* CEP e Estado lado a lado */}
+                        <div className={styles.grid}>
+                            <div className={styles.field}>
+                                <label>CEP (Busca automática)</label>
+                                <div className={styles.inputWrapper}>
+                                    <input
+                                        type="text"
+                                        placeholder="00000-000"
+                                        value={formData.cep}
+                                        onChange={handleCepChange}
+                                        className={styles.input}
+                                    />
+                                    {cepLoading && <Loader2 className={styles.spinner} size={18} />}
+                                </div>
+                            </div>
+                            <div className={styles.field}>
+                                <label>Estado (UF)</label>
+                                <select
+                                    value={formData.state}
+                                    onChange={e => setFormData({ ...formData, state: e.target.value })}
                                     className={styles.input}
-                                />
-                                {cepLoading && <Loader2 className={styles.spinner} size={18} />}
+                                    required
+                                >
+                                    <option value="">Selecione...</option>
+                                    <option value="AC">Acre</option>
+                                    <option value="AL">Alagoas</option>
+                                    <option value="AP">Amapá</option>
+                                    <option value="AM">Amazonas</option>
+                                    <option value="BA">Bahia</option>
+                                    <option value="CE">Ceará</option>
+                                    <option value="DF">Distrito Federal</option>
+                                    <option value="ES">Espírito Santo</option>
+                                    <option value="GO">Goiás</option>
+                                    <option value="MA">Maranhão</option>
+                                    <option value="MT">Mato Grosso</option>
+                                    <option value="MS">Mato Grosso do Sul</option>
+                                    <option value="MG">Minas Gerais</option>
+                                    <option value="PA">Pará</option>
+                                    <option value="PB">Paraíba</option>
+                                    <option value="PR">Paraná</option>
+                                    <option value="PE">Pernambuco</option>
+                                    <option value="PI">Piauí</option>
+                                    <option value="RJ">Rio de Janeiro</option>
+                                    <option value="RN">Rio Grande do Norte</option>
+                                    <option value="RS">Rio Grande do Sul</option>
+                                    <option value="RO">Rondônia</option>
+                                    <option value="RR">Roraima</option>
+                                    <option value="SC">Santa Catarina</option>
+                                    <option value="SP">São Paulo</option>
+                                    <option value="SE">Sergipe</option>
+                                    <option value="TO">Tocantins</option>
+                                </select>
                             </div>
                         </div>
 
-                        <StateCitySelect 
-                            selectedState={formData.state}
-                            selectedCity={formData.city}
-                            onStateChange={(state) => setFormData({ ...formData, state })}
-                            onCityChange={(city) => setFormData({ ...formData, city })}
-                        />
+                        {/* Cidade ocupando toda largura */}
+                        <div className={styles.field}>
+                            <label>Cidade</label>
+                            <input
+                                type="text"
+                                placeholder="Digite sua cidade"
+                                value={formData.city}
+                                onChange={e => setFormData({ ...formData, city: e.target.value })}
+                                className={styles.input}
+                                required
+                            />
+                        </div>
                     </div>
 
                     <div className={styles.termsWrapper}>

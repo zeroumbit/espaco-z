@@ -196,3 +196,4 @@ export const FOOTER_LINKS = {
         { label: 'Contato', href: '/contato' },
     ],
 };
+

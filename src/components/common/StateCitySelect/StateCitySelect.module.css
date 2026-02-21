@@ -1,0 +1,91 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.selectGroup {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+}
+
+@media (max-width: 640px) {
+    .selectGroup {
+        grid-template-columns: 1fr;
+    }
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--neutral-700, #374151);
+}
+
+.selectWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.select {
+    width: 100%;
+    padding: 10px 14px;
+    padding-right: 40px;
+    font-size: 1rem;
+    color: var(--neutral-800, #1f2937);
+    background-color: white;
+    border: 1px solid var(--neutral-300, #d1d5db);
+    border-radius: 8px;
+    appearance: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--primary-500, #6366f1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.select:disabled {
+    background-color: var(--neutral-50, #f9fafb);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.selectError {
+    border-color: var(--error-500, #ef4444);
+}
+
+.spinner {
+    position: absolute;
+    right: 12px;
+    animation: spin 1s linear infinite;
+    color: var(--primary-500, #6366f1);
+}
+
+.inputIcon {
+    position: absolute;
+    right: 12px;
+    color: var(--neutral-400, #9ca3af);
+    pointer-events: none;
+}
+
+.errorMessage {
+    font-size: 0.8rem;
+    color: var(--error-600, #dc2626);
+    margin: 0;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

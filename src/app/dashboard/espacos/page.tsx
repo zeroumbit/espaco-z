@@ -1,144 +1,207 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { MODULO_CONFIG, STATUS_CONFIG } from '@/lib/listings-constants';
+import { ListingService } from '@/lib/supabase/services';
 import styles from './page.module.css';
-import Image from 'next/image';
 
 export const metadata: Metadata = {
     title: 'Meus Espaços — Dashboard',
+    description: 'Gerencie seus imóveis e anúncios na plataforma Espaço Z.',
 };
 
 export default async function MySpacesPage() {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error: authError } = await supabase.auth.getUser();
+    const user = data?.user;
 
-    // Fetch tenant_id for the user
+    if (authError || !user) {
+        return (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+                <h1>Acesso Negado</h1>
+                <p>Você precisa estar logado para acessar esta página.</p>
+            </div>
+        );
+    }
+
+    // Fetch tenant_id e main_module do user
     const { data: profile } = await supabase
         .from('profiles')
-        .select('tenant_id')
+        .select('tenant_id, tenants(main_module)')
         .eq('user_id', user?.id)
         .single();
 
-    // Fetch real spaces
-    const { data: spaces, error } = await supabase
-        .from('spaces')
-        .select('*')
-        .eq('tenant_id', profile?.tenant_id)
-        .order('created_at', { ascending: false });
+    const tenantId = profile?.tenant_id;
+    const mainModule = (profile as any)?.tenants?.main_module;
 
-    if (error) {
-        console.error('Error fetching spaces:', error);
+    // Fetch listings (V3)
+    let listings: any[] = [];
+    try {
+        // Garantir que tenantId existe e não é a string 'null'
+        if (tenantId && tenantId !== 'null') {
+            listings = await ListingService.getOrgListings(tenantId);
+        }
+    } catch (err) {
+        console.error('[MeusEspacos] Error fetching listings:', err);
     }
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'ativo': return 'var(--success-500)';
-            case 'inativo': return 'var(--error-500)';
-            case 'rascunho': return 'var(--neutral-400)';
-            case 'pausado': return 'var(--warning-500)';
-            default: return 'var(--neutral-500)';
-        }
+    const getStatusStyle = (status: string) => {
+        const cfg = STATUS_CONFIG[status];
+        if (!cfg) return { label: status, color: '#64748B', bgColor: '#F1F5F9' };
+        return cfg;
     };
 
-    const getModuleLabel = (module: string) => {
-        const labels: Record<string, string> = {
-            'hospedagem': '🏨 Hospedagem',
-            'alugueis': '🏠 Aluguel',
-            'vendas': '🏡 Venda'
-        };
-        return labels[module] || module;
+    const getModuleConfig = (module: string) => {
+        return MODULO_CONFIG[module as keyof typeof MODULO_CONFIG];
     };
+
+    // Stats
+    const totalSpaces = listings.length;
+    const activeSpaces = listings.filter(l => l.status === 'ativo').length;
+    const totalViews = 0; // Stats serão implementados em breve
 
     return (
         <div className={styles.container}>
+            {/* Header */}
             <header className={styles.header}>
-                <div>
-                    <h1 className={styles.title}>Meus Espaços</h1>
-                    <p className={styles.subtitle}>Gerencie suas propriedades e anúncios na plataforma.</p>
+                <div className={styles.headerInfo}>
+                    <h1>Meus Espaços</h1>
+                    <p>Gerencie seus imóveis e anúncios na plataforma.</p>
                 </div>
                 <Link href="/dashboard/novo-espaco" className={styles.createBtn}>
                     + Novo Espaço
                 </Link>
             </header>
 
-            {/* Filters */}
-            <div className={styles.filters}>
-                <button className={`${styles.filterBtn} ${styles.filterActive}`}>Todos ({spaces?.length || 0})</button>
-                <button className={styles.filterBtn}>Ativos</button>
-                <button className={styles.filterBtn}>Hospedagem</button>
-                <button className={styles.filterBtn}>Aluguel</button>
+            {/* Stats Bar */}
+            <div className={styles.statsBar}>
+                <div className={styles.statChip}>
+                    <span className={styles.statChipIcon}>🏠</span>
+                    <div>
+                        <div className={styles.statChipLabel}>Total</div>
+                        <div className={styles.statChipValue}>{totalSpaces}</div>
+                    </div>
+                </div>
+                <div className={styles.statChip}>
+                    <span className={styles.statChipIcon}>✅</span>
+                    <div>
+                        <div className={styles.statChipLabel}>Ativos</div>
+                        <div className={styles.statChipValue}>{activeSpaces}</div>
+                    </div>
+                </div>
+                <div className={styles.statChip}>
+                    <span className={styles.statChipIcon}>👁️</span>
+                    <div>
+                        <div className={styles.statChipLabel}>Visualizações</div>
+                        <div className={styles.statChipValue}>{totalViews}</div>
+                    </div>
+                </div>
             </div>
 
-            {/* List */}
+            {/* Filters */}
+            <div className={styles.filters}>
+                <button className={`${styles.filterBtn} ${styles.filterActive}`}>
+                    Todos ({totalSpaces})
+                </button>
+                <button className={styles.filterBtn}>Ativos ({activeSpaces})</button>
+                {(!mainModule || mainModule === 'hospedagem') && (
+                    <button className={styles.filterBtn}>🏨 Hospedagem</button>
+                )}
+                {(!mainModule || mainModule === 'alugueis') && (
+                    <button className={styles.filterBtn}>🏠 Aluguel</button>
+                )}
+                {(!mainModule || mainModule === 'vendas') && (
+                    <button className={styles.filterBtn}>🏡 Venda</button>
+                )}
+            </div>
+
+            {/* Spaces List */}
             <div className={styles.list}>
-                {spaces?.map((space) => (
-                    <div key={space.id} className={styles.card}>
-                        <div className={styles.cardImage}>
-                            {space.photos && space.photos.length > 0 ? (
-                                <img src={space.photos[0]} alt={space.title} />
-                            ) : (
+                {listings.map((item) => {
+                    const space = item.property; // Na V3, os dados físicos vêm de property
+                    const cfg = getModuleConfig(item.modulo);
+                    const statusStyle = getStatusStyle(item.status);
+                    
+                    if (!space) return null;
+
+                    return (
+                        <div key={item.id} className={styles.card}>
+                            {/* Image */}
+                            <div className={styles.cardImage}>
+                                {/* TODO: Buscar fotos de property_media */}
                                 <div className={styles.noImage}>
                                     <span>📸</span>
                                 </div>
-                            )}
-                            <div className={styles.moduleBadge}>
-                                {getModuleLabel(space.module)}
+                                
+                                <span className={styles.moduleBadge}
+                                    style={{ background: cfg?.lightColor || '#f1f5f9', color: cfg?.color || '#64748b' }}>
+                                    {cfg?.icon} {cfg?.label}
+                                </span>
+                                <span className={styles.statusBadge}
+                                    style={{ background: statusStyle.bgColor, color: statusStyle.color }}>
+                                    {statusStyle.label}
+                                </span>
                             </div>
-                        </div>
 
-                        <div className={styles.cardContent}>
-                            <div className={styles.cardHeader}>
-                                <h3 className={styles.cardTitle}>{space.title}</h3>
-                                <div className={styles.statusRow}>
-                                    <span
-                                        className={styles.statusDot}
-                                        style={{ backgroundColor: getStatusColor(space.status) }}
-                                    />
-                                    <span className={styles.statusText}>{space.status}</span>
+                            {/* Content */}
+                            <div className={styles.cardContent}>
+                                <h3 className={styles.cardTitle}>{space.titulo}</h3>
+                                <div className={styles.cardLocation}>
+                                    📍 {space.bairro ? `${space.bairro}, ` : ''}{space.cidade} - {space.estado}
+                                </div>
+
+                                <div className={styles.cardFeatures}>
+                                    {space.quartos > 0 && (
+                                        <span className={styles.cardFeature}>🛏️ {space.quartos} quartos</span>
+                                    )}
+                                    {space.banheiros_sociais > 0 && (
+                                        <span className={styles.cardFeature}>🚿 {space.banheiros_sociais} banheiros</span>
+                                    )}
+                                    {space.area_total > 0 && (
+                                        <span className={styles.cardFeature}>📐 {space.area_total}m²</span>
+                                    )}
+                                </div>
+
+                                <div className={styles.cardPrice}>
+                                    <strong>R$ {(item.preco_base_centavos / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                                    <span> {cfg?.precoPeriodo}</span>
+                                </div>
+
+                                <div className={styles.cardStats}>
+                                    <span>👁️ 0 views</span>
+                                    <span>❤️ 0 favoritos</span>
                                 </div>
                             </div>
 
-                            <p className={styles.cardLocation}>
-                                📍 {space.city}, {space.state} · {space.neighborhood || 'Bairro não inf.'}
-                            </p>
-
-                            <div className={styles.cardPrice}>
-                                <strong>R$ {Number(space.price).toLocaleString('pt-BR')}</strong>
-                                <span>{space.module === 'hospedagem' ? '/ noite' : space.module === 'vendas' ? '' : '/ mês'}</span>
-                            </div>
-
-                            <div className={styles.cardStats}>
-                                <div className={styles.statItem}>
-                                    <span>👁️ {space.views_count || 0}</span>
-                                    <span>votos: {space.rating_count || 0}</span>
-                                </div>
-                                <div className={styles.statItem}>
-                                    <span>🛏️ {space.bedrooms || 0}</span>
-                                    <span>👥 {space.max_guests || 1}</span>
-                                </div>
+                            {/* Actions */}
+                            <div className={styles.cardActions}>
+                                <button className={styles.editBtn}>
+                                    ✏️ Editar
+                                </button>
+                                {item.modulo === 'hospedagem' && (
+                                    <button className={styles.secondaryBtn}>
+                                        📅 Calendário
+                                    </button>
+                                )}
+                                <button className={styles.secondaryBtn}>
+                                    📊 Estatísticas
+                                </button>
+                                <button className={styles.dangerBtn}>
+                                    {item.status === 'ativo' ? '⏸️ Pausar' : '▶️ Ativar'}
+                                </button>
                             </div>
                         </div>
+                    );
+                })}
 
-                        <div className={styles.cardActions}>
-                            <button className={styles.editBtn}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                Editar
-                            </button>
-                            <button className={styles.secondaryBtn}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" /></svg>
-                                Calendário
-                            </button>
-                        </div>
-                    </div>
-                ))}
-
-                {(!spaces || spaces.length === 0) && (
+                {/* Empty State */}
+                {listings.length === 0 && (
                     <div className={styles.emptyState}>
-                        <div className={styles.emptyIcon}>🏠</div>
-                        <h3>Você ainda não tem espaços cadastrados</h3>
-                        <p>Crie seu primeiro anúncio para começar a receber reservas!</p>
+                        <div className={styles.emptyIcon}>🏡</div>
+                        <h3>Nenhum espaço cadastrado ainda</h3>
+                        <p>Crie seu primeiro anúncio e comece a receber contatos!</p>
                         <Link href="/dashboard/novo-espaco" className={styles.createBtn}>
-                            Criar meu primeiro anúncio
+                            + Criar meu primeiro anúncio
                         </Link>
                     </div>
                 )}

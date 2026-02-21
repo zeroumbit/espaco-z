@@ -30,14 +30,16 @@ export default function LoginPage() {
             if (authError) throw authError;
 
             if (user) {
-                console.log('[Login] Sucesso Auth. Verificando permissões...');
+                console.log('[Login] Sucesso Auth. User ID:', user.id, 'Email:', user.email);
 
-                // Fetch profile to get role
+                // Fetch profile to get role and tenant_id
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
-                    .select('role')
+                    .select('role, tenant_id')
                     .eq('user_id', user.id)
                     .single();
+
+                console.log('[Login] Profile:', profile, 'Erro:', profileError);
 
                 if (profileError) {
                     console.error('[Login] Erro ao buscar perfil:', profileError);
@@ -49,15 +51,17 @@ export default function LoginPage() {
                 let targetPath = '/';
                 const userRole = profile?.role;
                 const userEmail = user.email;
+                const hasTenant = !!profile?.tenant_id;
 
-                // Se for seu email, força a ida para /admin independente do que o banco disser no momento
+                // Se for admin
                 if (userRole === 'admin' || userEmail === 'zeroumbit@gmail.com') {
                     targetPath = '/admin';
-                } else if (userRole === 'anunciante') {
+                } else if (userRole === 'anunciante' || hasTenant) {
+                    // Se tem role anunciante OU se tem tenant_id (cadastrou empresa)
                     targetPath = '/dashboard';
                 }
 
-                console.log(`[Login] Role: ${userRole}, Email: ${userEmail} -> Destino: ${targetPath}`);
+                console.log(`[Login] Role: ${userRole}, Email: ${userEmail}, Tenant: ${profile?.tenant_id} -> Destino: ${targetPath}`);
 
                 // Força o redirecionamento com recarregamento completo
                 setTimeout(() => {

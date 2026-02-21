@@ -142,17 +142,18 @@ async function createTestUsers() {
       }
 
       // Se for um anunciante, criar também o tenant
-      if (userData.tenantData) {
+      const tenantData = (userData as any).tenantData;
+      if (tenantData) {
         const { error: tenantError } = await supabase
           .from('tenants')
           .insert([{
             user_id: userId,
-            name: userData.tenantData.name,
-            slug: userData.tenantData.slug,
-            email: userData.tenantData.email,
-            phone: userData.tenantData.phone,
-            description: userData.tenantData.description,
-            subscription_plan: userData.tenantData.subscription_plan,
+            name: tenantData.name,
+            slug: tenantData.slug,
+            email: tenantData.email,
+            phone: tenantData.phone,
+            description: tenantData.description,
+            subscription_plan: tenantData.subscription_plan,
           }]);
 
         if (tenantError) {
@@ -162,12 +163,12 @@ async function createTestUsers() {
           const { error: updateTenantError } = await supabase
             .from('tenants')
             .update({
-              name: userData.tenantData.name,
-              slug: userData.tenantData.slug,
-              email: userData.tenantData.email,
-              phone: userData.tenantData.phone,
-              description: userData.tenantData.description,
-              subscription_plan: userData.tenantData.subscription_plan,
+              name: tenantData.name,
+              slug: tenantData.slug,
+              email: tenantData.email,
+              phone: tenantData.phone,
+              description: tenantData.description,
+              subscription_plan: tenantData.subscription_plan,
             })
             .eq('user_id', userId);
 

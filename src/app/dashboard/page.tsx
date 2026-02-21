@@ -9,9 +9,10 @@ export const metadata = {
 
 export default async function DashboardPage() {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error: authError } = await supabase.auth.getUser();
+    const user = data?.user;
 
-    if (!user) {
+    if (authError || !user) {
         return (
             <div style={{ padding: '2rem', textAlign: 'center' }}>
                 <h1>Erro</h1>
@@ -53,31 +54,34 @@ export default async function DashboardPage() {
                     </div>
                 </header>
 
-                <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#FFF3CD', borderRadius: '8px', margin: '2rem 0' }}>
-                    <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>⚠️ Complete seu Cadastro</h2>
-                    <p style={{ marginBottom: '1.5rem' }}>Você precisa cadastrar sua empresa para acessar todas as funcionalidades.</p>
-                    <Link href="/anunciar" className={styles.createBtn}>
-                        Cadastrar Empresa
+                <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-color)', borderRadius: '16px', margin: '2rem 0' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</div>
+                    <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Quase lá!</h2>
+                    <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 2rem' }}>
+                        Para começar a anunciar seus espaços, precisamos que você complete as informações da sua empresa ou perfil profissional.
+                    </p>
+                    <Link href="/dashboard/perfil" className={styles.createBtn} style={{ padding: '0.8rem 2rem' }}>
+                        Completar meu Perfil
                     </Link>
                 </div>
             </div>
         );
     }
 
-    // Stats
-    const { count: spacesCount, error: spacesError } = await supabase
-        .from('spaces')
+    // Stats (V3)
+    const { count: spacesCount, error: spacesError } = (tenant?.id && tenant.id !== 'null') ? await supabase
+        .from('listings')
         .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenant.id);
+        .eq('organization_id', tenant.id) : { count: 0, error: null };
 
-    const { count: activeCount, error: activeError } = await supabase
-        .from('spaces')
+    const { count: activeCount, error: activeError } = (tenant?.id && tenant.id !== 'null') ? await supabase
+        .from('listings')
         .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenant.id)
-        .eq('status', 'ativo');
+        .eq('organization_id', tenant.id)
+        .eq('status', 'ativo') : { count: 0, error: null };
 
-    if (spacesError) console.error('[Dashboard] Erro ao buscar spaces:', spacesError);
-    if (activeError) console.error('[Dashboard] Erro ao buscar active spaces:', activeError);
+    if (spacesError) console.error('[Dashboard] Erro ao buscar listings:', spacesError);
+    if (activeError) console.error('[Dashboard] Erro ao buscar active listings:', activeError);
 
     // Module-specific labels
     const moduleConfig: Record<string, { icon: string; label: string; color: string; lightColor: string }> = {

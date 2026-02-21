@@ -47,20 +47,41 @@ export default function RegisterAdvertiserPage() {
 
         try {
             // 1. Criar o usuário no Auth
+            console.log('[Cadastro] Iniciando signUp...');
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
                 options: {
                     data: {
                         full_name: formData.name,
-                    }
+                    },
+                    emailRedirectTo: undefined, // Desabilita redirect de confirmação
                 }
             });
 
             if (authError) throw authError;
             if (!authData.user) throw new Error('Erro ao criar usuário.');
+            console.log('[Cadastro] Usuário criado:', authData.user.id);
+
+            // Verificar se o usuário tem sessão ativa (email não confirmado = sem sessão)
+            if (!authData.session) {
+                console.log('[Cadastro] Sessão não ativa. Tentando login automático...');
+                const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                    email: formData.email,
+                    password: formData.password,
+                });
+                if (loginError) {
+                    console.error('[Cadastro] Erro no login automático:', loginError);
+                    throw new Error('Conta criada com sucesso! Porém não foi possível fazer login automático. Por favor, confirme seu e-mail e faça login manualmente.');
+                }
+                console.log('[Cadastro] Login automático OK:', loginData.user?.id);
+            }
+
+            // Aguardar um momento para o trigger handle_new_user criar o profile
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             // 2. Criar o Tenant (Empresa)
+            console.log('[Cadastro] Criando tenant...');
             const { data: tenant, error: tenantError } = await supabase
                 .from('tenants')
                 .insert({
@@ -79,21 +100,33 @@ export default function RegisterAdvertiserPage() {
                 .select()
                 .single();
 
-            if (tenantError) throw tenantError;
+            if (tenantError) {
+                console.error('[Cadastro] Erro ao criar tenant:', tenantError);
+                throw tenantError;
+            }
+            console.log('[Cadastro] Tenant criado:', tenant.id);
 
-            // 3. Atualizar o Perfil
-            const { error: profileError } = await supabase
+            // 3. Atualizar o Perfil para anunciante
+            console.log('[Cadastro] Atualizando perfil para anunciante...');
+            const { data: updatedProfile, error: profileError } = await supabase
                 .from('profiles')
                 .update({
                     role: 'anunciante',
                     tenant_id: tenant.id
                 })
-                .eq('user_id', authData.user.id);
+                .eq('user_id', authData.user.id)
+                .select()
+                .single();
 
-            if (profileError) throw profileError;
+            if (profileError) {
+                console.error('[Cadastro] Erro ao atualizar perfil:', profileError);
+                throw profileError;
+            }
+            console.log('[Cadastro] Perfil atualizado:', updatedProfile);
 
-            // 4. Redirecionar para o Dashboard (Painel do Lojista)
-            router.push('/dashboard');
+            // 4. Redirecionar para o Dashboard com reload completo
+            console.log('[Cadastro] Redirecionando para /dashboard...');
+            window.location.href = '/dashboard';
 
         } catch (err: any) {
             console.error('Erro no cadastro:', err);

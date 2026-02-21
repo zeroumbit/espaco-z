@@ -78,6 +78,14 @@ export interface Tenant {
     max_spaces: number;
     trial_ends_at?: string;
     is_active: boolean;
+    address_completed: boolean;
+    cep?: string;
+    address?: string; // logradouro
+    number?: string;
+    neighborhood?: string;
+    complement?: string;
+    latitude?: number;
+    longitude?: number;
     created_at: string;
     updated_at: string;
 }

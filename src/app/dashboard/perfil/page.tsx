@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './page.module.css';
+import { buscarEstadosIBGE, buscarCidadesPorEstadoIBGE } from '@/lib/location';
+import { Loader2 } from 'lucide-react';
 
 export default function PerfilPage() {
     const supabase = createClient();
@@ -10,15 +12,17 @@ export default function PerfilPage() {
     const [tenant, setTenant] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [stateLoading, setStateLoading] = useState(false);
+    const [cityLoading, setCityLoading] = useState(false);
+    const [states, setStates] = useState<{ sigla: string, nome: string }[]>([]);
+    const [cities, setCities] = useState<string[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     // Form states
     const [profileForm, setProfileForm] = useState({
         full_name: '',
-        phone: '',
-        city: '',
-        state: ''
+        phone: ''
     });
 
     const [tenantForm, setTenantForm] = useState({
@@ -53,9 +57,7 @@ export default function PerfilPage() {
                 setProfile(profileData);
                 setProfileForm({
                     full_name: profileData.full_name || '',
-                    phone: profileData.phone || '',
-                    city: profileData.city || '',
-                    state: profileData.state || ''
+                    phone: profileData.phone || ''
                 });
 
                 // Buscar tenant
@@ -97,6 +99,42 @@ export default function PerfilPage() {
         fetchProfileAndTenant();
     }, []);
 
+    // Carregar estados (IBGE)
+    useEffect(() => {
+        async function loadStates() {
+            setStateLoading(true);
+            try {
+                const data = await buscarEstadosIBGE();
+                setStates(data);
+            } catch (err) {
+                console.error('Erro ao carregar estados:', err);
+            } finally {
+                setStateLoading(false);
+            }
+        }
+        loadStates();
+    }, []);
+
+    // Carregar cidades quando o estado do tenant mudar
+    useEffect(() => {
+        async function loadCities() {
+            if (!tenantForm.state) {
+                setCities([]);
+                return;
+            }
+            setCityLoading(true);
+            try {
+                const data = await buscarCidadesPorEstadoIBGE(tenantForm.state);
+                setCities(data.map(c => c.nome));
+            } catch (err) {
+                console.error('Erro ao carregar cidades:', err);
+            } finally {
+                setCityLoading(false);
+            }
+        }
+        loadCities();
+    }, [tenantForm.state]);
+
     const handleSaveProfile = async () => {
         setSaving(true);
         setError('');
@@ -106,14 +144,39 @@ export default function PerfilPage() {
                 .from('profiles')
                 .update({
                     full_name: profileForm.full_name,
-                    phone: profileForm.phone,
-                    city: profileForm.city,
-                    state: profileForm.state
+                    phone: profileForm.phone
                 })
                 .eq('id', profile.id);
 
             if (updateError) throw updateError;
             setSuccess('Dados pessoais atualizados com sucesso!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleUpdateTenant = async () => {
+        setSaving(true);
+        setError('');
+        setSuccess('');
+        try {
+            const { error: updateError } = await supabase
+                .from('tenants')
+                .update({
+                    name: tenantForm.name,
+                    business_type: tenantForm.business_type,
+                    document: tenantForm.document,
+                    main_module: tenantForm.main_module,
+                    city: tenantForm.city,
+                    state: tenantForm.state,
+                    whatsapp: tenantForm.whatsapp
+                })
+                .eq('id', tenant.id);
+
+            if (updateError) throw updateError;
+            setSuccess('Dados da empresa atualizados com sucesso!');
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -153,12 +216,15 @@ export default function PerfilPage() {
 
             if (tError) throw tError;
 
-            // 2. Vincular ao Perfil
+            // 2. Vincular ao Perfil e sincronizar dados básicos
             const { error: pError } = await supabase
                 .from('profiles')
                 .update({ 
                     tenant_id: newTenant.id,
-                    role: 'anunciante'
+                    role: 'anunciante',
+                    phone: profileForm.phone || tenantForm.whatsapp,
+                    city: tenantForm.city,
+                    state: tenantForm.state
                 })
                 .eq('user_id', user.id);
 
@@ -233,22 +299,6 @@ export default function PerfilPage() {
                                 placeholder="(00) 00000-0000"
                             />
                         </div>
-                        <div className={styles.field}>
-                            <label>Cidade</label>
-                            <input 
-                                type="text" 
-                                value={profileForm.city}
-                                onChange={e => setProfileForm({...profileForm, city: e.target.value})}
-                            />
-                        </div>
-                        <div className={styles.field}>
-                            <label>Estado</label>
-                            <input 
-                                type="text" 
-                                value={profileForm.state}
-                                onChange={e => setProfileForm({...profileForm, state: e.target.value})}
-                            />
-                        </div>
                     </div>
                     <button className={styles.saveBtn} onClick={handleSaveProfile} disabled={saving}>
                         {saving ? 'Salvando...' : 'Atualizar Dados Pessoais'}
@@ -264,7 +314,7 @@ export default function PerfilPage() {
 
                     {!tenant && (
                         <div className={styles.onboardingNotice}>
-                            <span className={styles.noticeIcon}>�</span>
+                            <span className={styles.noticeIcon}>💡</span>
                             <p>Preencha os dados abaixo para ativar sua conta de anunciante e começar a postar seus imóveis.</p>
                         </div>
                     )}
@@ -319,26 +369,50 @@ export default function PerfilPage() {
                             />
                         </div>
                         <div className={styles.field}>
-                            <label>Cidade Atuação</label>
-                            <input 
-                                type="text" 
-                                value={tenantForm.city}
-                                onChange={e => setTenantForm({...tenantForm, city: e.target.value})}
-                            />
+                            <label>Estado Atuação</label>
+                            <div className={styles.inputWrapper}>
+                                <select 
+                                    value={tenantForm.state}
+                                    onChange={e => setTenantForm({...tenantForm, state: e.target.value, city: ''})}
+                                    className={styles.input}
+                                    disabled={stateLoading}
+                                >
+                                    <option value="">{stateLoading ? 'Carregando...' : 'Selecione...'}</option>
+                                    {states.map(s => (
+                                        <option key={s.sigla} value={s.sigla}>{s.nome}</option>
+                                    ))}
+                                </select>
+                                {stateLoading && <Loader2 className={styles.spinner} size={18} />}
+                            </div>
                         </div>
                         <div className={styles.field}>
-                            <label>Estado Atuação</label>
-                            <input 
-                                type="text" 
-                                value={tenantForm.state}
-                                onChange={e => setTenantForm({...tenantForm, state: e.target.value})}
-                            />
+                            <label>Cidade Atuação</label>
+                            <div className={styles.inputWrapper}>
+                                <select 
+                                    value={tenantForm.city}
+                                    onChange={e => setTenantForm({...tenantForm, city: e.target.value})}
+                                    className={styles.input}
+                                    disabled={!tenantForm.state || cityLoading}
+                                >
+                                    <option value="">
+                                        {!tenantForm.state ? 'Selecione o estado primeiro' : (cityLoading ? 'Carregando...' : 'Selecione a cidade...')}
+                                    </option>
+                                    {/* Caso a cidade já venha do banco e não esteja na lista inicial */}
+                                    {tenantForm.city && !cities.includes(tenantForm.city) && (
+                                        <option value={tenantForm.city}>{tenantForm.city}</option>
+                                    )}
+                                    {cities.map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                                {cityLoading && <Loader2 className={styles.spinner} size={18} />}
+                            </div>
                         </div>
                     </div>
 
                     {tenant ? (
-                        <button className={styles.saveBtn} disabled={true}>
-                            Dados da Empresa (Edição em breve)
+                        <button className={styles.saveBtn} onClick={handleUpdateTenant} disabled={saving}>
+                            {saving ? 'Salvando...' : 'Atualizar Dados da Empresa'}
                         </button>
                     ) : (
                         <button className={styles.createTenantBtn} onClick={handleCreateTenant} disabled={saving}>

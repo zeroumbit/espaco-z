@@ -19,35 +19,46 @@ export default async function DashboardLayout({
             redirect('/login');
         }
 
-        // Fetch profile to verify role and tenant
+        // Fetch profile to verify role and tenant with Retry Logic (Handle Database Latency)
         let profile = null;
         let tenant = null;
-        try {
-            const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('role, tenant_id, tenants(id, address_completed)')
-                .eq('user_id', user.id)
-                .single();
-            
-            if (error) {
-                console.error('[Dashboard Layout] Error fetching profile:', error);
-            } else {
-                profile = profileData;
-                tenant = (profileData as any).tenants;
+        const isSuperAdmin = user.email === 'zeroumbit@gmail.com';
+
+        // Tentar até 3 vezes buscar o perfil em caso de ausência (latência de replicação)
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const { data: profileData, error } = await supabase
+                    .from('profiles')
+                    .select('role, tenant_id, tenants(id)')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                if (!error && profileData) {
+                    profile = profileData;
+                    tenant = (profileData as any).tenants;
+                    break; // Sucesso! Sai do loop
+                }
+
+                if (attempt < 3) {
+                    console.log(`[Dashboard Layout] Tentativa ${attempt} falhou. Aguardando sincronização...`);
+                    await new Promise(resolve => setTimeout(resolve, 800 * attempt)); // Delay progressivo
+                }
+            } catch (err) {
+                console.error(`[Dashboard Layout] Erro na tentativa ${attempt}:`, err);
             }
-        } catch (err) {
-            console.error('[Dashboard Layout] Error in profile fetch:', err);
         }
 
-        // Permitir acesso se: é admin, é anunciante, ou tem tenant_id associado
-        const hasAccess = profile && (
+        // Permitir acesso se: é super admin (email), é admin (role), é anunciante, ou tem tenant_id associado
+        const hasAccess = isSuperAdmin || (profile && (
             profile.role === 'anunciante' ||
             profile.role === 'admin' ||
             profile.tenant_id != null
-        );
+        ));
 
-        if (!hasAccess) {
-            console.warn('[Dashboard Layout] Acesso negado para o usuário:', user.id);
+        if (isSuperAdmin) {
+            console.log('[Dashboard Layout] Acesso Super Admin concedido via Master Email');
+        } else if (!hasAccess) {
+            console.warn('[Dashboard Layout] Acesso negado. Perfil não encontrado ou sem permissão após retentativas.');
             redirect('/');
         }
 

@@ -41,7 +41,7 @@ export default function LoginPage() {
 
                 console.log('[Login] Profile:', profile, 'Erro:', profileError);
 
-                if (profileError) {
+                if (profileError && user?.email !== 'zeroumbit@gmail.com') {
                     console.error('[Login] Erro ao buscar perfil:', profileError);
                     window.location.replace('/');
                     return;
@@ -50,23 +50,21 @@ export default function LoginPage() {
                 // Lógica de Redirecionamento Robusta
                 let targetPath = '/';
                 const userRole = profile?.role;
-                const userEmail = user.email;
+                const userEmailFix = user.email; // Já temos userEmail acima, mas mantendo clareza
                 const hasTenant = !!profile?.tenant_id;
 
-                // Se for admin
-                if (userRole === 'admin' || userEmail === 'zeroumbit@gmail.com') {
+                // Se for admin (Verificação Dupla: Role ou Email Mestre)
+                if (userRole === 'admin' || userEmailFix === 'zeroumbit@gmail.com') {
                     targetPath = '/admin';
                 } else if (userRole === 'anunciante' || hasTenant) {
                     // Se tem role anunciante OU se tem tenant_id (cadastrou empresa)
                     targetPath = '/dashboard';
                 }
 
-                console.log(`[Login] Role: ${userRole}, Email: ${userEmail}, Tenant: ${profile?.tenant_id} -> Destino: ${targetPath}`);
+                console.log(`[Login] Role: ${userRole}, Email: ${userEmailFix}, Tenant: ${profile?.tenant_id} -> Destino: ${targetPath}`);
 
-                // Força o redirecionamento com recarregamento completo
-                setTimeout(() => {
-                    window.location.href = targetPath;
-                }, 300);
+                // Força o redirecionamento com recarregamento completo para limpar estados de memória
+                window.location.href = targetPath;
             }
         } catch (err: any) {
             console.error('Erro completo de autenticação:', err);

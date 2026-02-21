@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import styles from './page.module.css';
 import Link from 'next/link';
-import { buscarEnderecoPorCep, buscarCidadesPorEstadoIBGE } from '@/lib/location';
+import { buscarEnderecoPorCep, buscarCidadesPorEstadoIBGE, buscarEstadosIBGE } from '@/lib/location';
 import { Loader2 } from 'lucide-react';
 
 export default function RegisterAdvertiserPage() {
@@ -13,9 +13,27 @@ export default function RegisterAdvertiserPage() {
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [cepLoading, setCepLoading] = useState(false);
+    const [stateLoading, setStateLoading] = useState(false);
     const [cityLoading, setCityLoading] = useState(false);
+    const [states, setStates] = useState<{ sigla: string, nome: string }[]>([]);
     const [cities, setCities] = useState<string[]>([]);
     const [error, setError] = useState('');
+
+    // Busca estados iniciais
+    useEffect(() => {
+        async function loadStates() {
+            setStateLoading(true);
+            try {
+                const data = await buscarEstadosIBGE();
+                setStates(data);
+            } catch (err) {
+                console.error('Erro ao carregar estados:', err);
+            } finally {
+                setStateLoading(false);
+            }
+        }
+        loadStates();
+    }, []);
 
     const [formData, setFormData] = useState({
         // TIPO DE ANUNCIO
@@ -50,8 +68,8 @@ export default function RegisterAdvertiserPage() {
                 if (data) {
                     setFormData(prev => ({
                         ...prev,
-                        city: data.city,
-                        state: data.state
+                        state: data.state,
+                        city: data.city // Será validado pelo render
                     }));
                 }
             } catch (err) {
@@ -158,23 +176,43 @@ export default function RegisterAdvertiserPage() {
 
             // 3. Atualizar o Perfil para anunciante
             console.log('[Cadastro] Atualizando perfil para anunciante...');
-            const { data: updatedProfile, error: profileError } = await supabase
+            
+            // Tenta buscar o perfil primeiro para ver se o trigger já criou
+            const { data: existingProfile } = await supabase
                 .from('profiles')
-                .update({
-                    role: 'anunciante',
-                    tenant_id: tenant.id
-                })
+                .select('id')
                 .eq('user_id', authData.user.id)
-                .select()
                 .single();
 
-            if (profileError) {
-                console.error('[Cadastro] Erro ao atualizar perfil:', profileError);
-                throw profileError;
-            }
-            console.log('[Cadastro] Perfil atualizado:', updatedProfile);
+            if (!existingProfile) {
+                console.log('[Cadastro] Perfil não encontrado, criando manualmente...');
+                await supabase.from('profiles').insert({
+                    user_id: authData.user.id,
+                    full_name: formData.name,
+                    role: 'anunciante',
+                    tenant_id: tenant.id
+                });
+            } else {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .update({
+                        full_name: formData.name,
+                        role: 'anunciante',
+                        tenant_id: tenant.id,
+                        city: formData.city,
+                        state: formData.state
+                    })
+                    .eq('user_id', authData.user.id);
 
-            // 4. Redirecionar para o Dashboard com reload completo
+                if (profileError) {
+                    console.error('[Cadastro] Erro ao atualizar perfil:', profileError);
+                    throw profileError;
+                }
+            }
+
+            console.log('[Cadastro] Perfil processado com sucesso.');
+
+            // 4. Redirecionar para o Dashboard com reload completo para garantir que o server-side pegue os novos dados
             console.log('[Cadastro] Redirecionando para /dashboard...');
             window.location.href = '/dashboard';
 
@@ -358,44 +396,28 @@ export default function RegisterAdvertiserPage() {
                             </div>
                             <div className={styles.field}>
                                 <label>Estado (UF)</label>
-                                <select
-                                    value={formData.state}
-                                    onChange={(e) => {
-                                        setFormData({ ...formData, state: e.target.value });
-                                        setFormData({ ...formData, city: '' }); // Limpa cidade ao mudar estado
-                                    }}
-                                    className={styles.input}
-                                    required
-                                >
-                                    <option value="">Selecione...</option>
-                                    <option value="AC">Acre</option>
-                                    <option value="AL">Alagoas</option>
-                                    <option value="AP">Amapá</option>
-                                    <option value="AM">Amazonas</option>
-                                    <option value="BA">Bahia</option>
-                                    <option value="CE">Ceará</option>
-                                    <option value="DF">Distrito Federal</option>
-                                    <option value="ES">Espírito Santo</option>
-                                    <option value="GO">Goiás</option>
-                                    <option value="MA">Maranhão</option>
-                                    <option value="MT">Mato Grosso</option>
-                                    <option value="MS">Mato Grosso do Sul</option>
-                                    <option value="MG">Minas Gerais</option>
-                                    <option value="PA">Pará</option>
-                                    <option value="PB">Paraíba</option>
-                                    <option value="PR">Paraná</option>
-                                    <option value="PE">Pernambuco</option>
-                                    <option value="PI">Piauí</option>
-                                    <option value="RJ">Rio de Janeiro</option>
-                                    <option value="RN">Rio Grande do Norte</option>
-                                    <option value="RS">Rio Grande do Sul</option>
-                                    <option value="RO">Rondônia</option>
-                                    <option value="RR">Roraima</option>
-                                    <option value="SC">Santa Catarina</option>
-                                    <option value="SP">São Paulo</option>
-                                    <option value="SE">Sergipe</option>
-                                    <option value="TO">Tocantins</option>
-                                </select>
+                                <div className={styles.inputWrapper}>
+                                    <select
+                                        value={formData.state}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value;
+                                            setFormData(prev => ({ 
+                                                ...prev, 
+                                                state: newValue, 
+                                                city: '' 
+                                            }));
+                                        }}
+                                        className={styles.input}
+                                        required
+                                        disabled={stateLoading}
+                                    >
+                                        <option value="">{stateLoading ? 'Carregando...' : 'Selecione...'}</option>
+                                        {states.map(s => (
+                                            <option key={s.sigla} value={s.sigla}>{s.nome}</option>
+                                        ))}
+                                    </select>
+                                    {stateLoading && <Loader2 className={styles.spinner} size={18} />}
+                                </div>
                             </div>
                         </div>
 
@@ -407,20 +429,18 @@ export default function RegisterAdvertiserPage() {
                                     value={formData.city}
                                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                                     className={styles.input}
-                                    disabled={!formData.state || cityLoading}
                                     required
+                                    disabled={!formData.state || cityLoading}
                                 >
                                     <option value="">
-                                        {!formData.state 
-                                            ? "Selecione o estado antes" 
-                                            : cityLoading 
-                                                ? "Carregando cidades..." 
-                                                : "Selecione sua cidade"}
+                                        {!formData.state ? 'Selecione um estado primeiro' : (cityLoading ? 'Carregando cidades...' : 'Selecione a cidade...')}
                                     </option>
-                                    {cities.map((cidade) => (
-                                        <option key={cidade} value={cidade}>
-                                            {cidade}
-                                        </option>
+                                    {/* Adiciona a cidade do CEP se ela não estiver na lista do IBGE ainda */}
+                                    {formData.city && !cities.includes(formData.city) && (
+                                        <option value={formData.city}>{formData.city}</option>
+                                    )}
+                                    {cities.map(c => (
+                                        <option key={c} value={c}>{c}</option>
                                     ))}
                                 </select>
                                 {cityLoading && <Loader2 className={styles.spinner} size={18} />}

@@ -70,10 +70,11 @@ export default function RegisterAdvertiserPage() {
                     city: formData.city,
                     state: formData.state,
                     user_id: authData.user.id,
+                    business_type: formData.businessType,
+                    document: formData.document,
+                    main_module: formData.mainModule,
                     subscription_plan: 'trial',
-                    is_active: true,
-                    // Armazenando metadados extras no campo description (ou outro disponível)
-                    description: `Tipo: ${formData.businessType} | Doc: ${formData.document} | Módulo: ${formData.mainModule}`
+                    is_active: true
                 })
                 .select()
                 .single();

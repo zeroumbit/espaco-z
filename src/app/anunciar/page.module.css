@@ -281,6 +281,24 @@
     text-decoration: none;
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.spinner {
+    position: absolute;
+    right: var(--space-3);
+    color: var(--primary-600);
+    animation: spin 1s linear infinite;
+}
+
 @media (max-width: 600px) {
     .grid {
         grid-template-columns: 1fr;

@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   business_type TEXT CHECK (business_type IN ('PF', 'PJ')),
   document TEXT,
   main_module TEXT CHECK (main_module IN ('hospedagem', 'alugueis', 'vendas')),
+  atuacao_especifica TEXT[] DEFAULT '{}',
 
   -- Endereço Completo
   cep TEXT,

@@ -31,7 +31,8 @@ export default function PerfilPage() {
         address: '',
         number: '',
         neighborhood: '',
-        complement: ''
+        complement: '',
+        atuacao_especifica: [] as string[]
     });
 
     const [passwordForm, setPasswordForm] = useState({
@@ -77,7 +78,8 @@ export default function PerfilPage() {
                             address: tenantData.address || '',
                             number: tenantData.number || '',
                             neighborhood: tenantData.neighborhood || '',
-                            complement: tenantData.complement || ''
+                            complement: tenantData.complement || '',
+                            atuacao_especifica: tenantData.atuacao_especifica || []
                         });
                     }
                 } else {
@@ -154,7 +156,8 @@ export default function PerfilPage() {
                     address: tenantForm.address,
                     number: tenantForm.number,
                     neighborhood: tenantForm.neighborhood,
-                    complement: tenantForm.complement
+                    complement: tenantForm.complement,
+                    atuacao_especifica: tenantForm.atuacao_especifica
                 })
                 .eq('id', tenant.id);
 
@@ -196,6 +199,7 @@ export default function PerfilPage() {
                     number: tenantForm.number,
                     neighborhood: tenantForm.neighborhood,
                     complement: tenantForm.complement,
+                    atuacao_especifica: tenantForm.atuacao_especifica,
                     subscription_plan: 'trial',
                     is_active: true
                 })
@@ -251,6 +255,42 @@ export default function PerfilPage() {
 
     if (loading) return <div className={styles.loading}>Carregando...</div>;
 
+    // Constantes para as opções de atuação (Sincronizado com onboarding e constants)
+    const ATUACAO_OPTIONS_MAP: Record<string, { value: string, label: string }[]> = {
+        hospedagem: [
+            { value: 'hotel', label: 'Hotel' },
+            { value: 'pousada', label: 'Pousada' },
+            { value: 'resort', label: 'Resort' },
+            { value: 'albergue', label: 'Albergue' },
+            { value: 'casa', label: 'Casa' },
+            { value: 'apartamento', label: 'Apartamento' },
+            { value: 'quarto_privativo', label: 'Quarto Privativo' },
+            { value: 'quarto_compartilhado', label: 'Quarto Compartilhado' },
+            { value: 'acomodacao_unica', label: 'Acomodação Única' },
+        ],
+        alugueis: [
+            { value: 'casa', label: 'Casa' },
+            { value: 'apartamento', label: 'Apartamento' },
+            { value: 'espaco_comercial', label: 'Espaço Comercial' },
+            { value: 'quarto_privativo', label: 'Quarto Privativo' },
+        ],
+        vendas: [
+            { value: 'casa', label: 'Casa' },
+            { value: 'apartamento', label: 'Apartamento' },
+            { value: 'espaco_comercial', label: 'Espaço Comercial' },
+        ]
+    };
+
+    const currentAtuacaoOptions = ATUACAO_OPTIONS_MAP[tenantForm.main_module] || [];
+
+    const handleAtuacaoToggle = (value: string) => {
+        const current = tenantForm.atuacao_especifica;
+        const next = current.includes(value)
+            ? current.filter(v => v !== value)
+            : [...current, value];
+        setTenantForm({ ...tenantForm, atuacao_especifica: next });
+    };
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -269,7 +309,7 @@ export default function PerfilPage() {
                         <p>Seu e-mail de acesso à plataforma.</p>
                     </div>
                     <div className={styles.grid}>
-                        <div className={styles.field} style={{ gridColumn: 'span 3' }}>
+                        <div className={styles.field} style={{ gridColumn: 'span 2' }}>
                             <label>E-mail</label>
                             <input
                                 type="email"
@@ -289,11 +329,12 @@ export default function PerfilPage() {
                     </div>
 
                     <div className={styles.grid}>
-                        <div className={styles.field}>
+                        <div className={styles.field} style={{ gridColumn: 'span 2' }}>
                             <label>Módulo Principal</label>
                             <select
                                 value={tenantForm.main_module}
                                 onChange={e => setTenantForm({...tenantForm, main_module: e.target.value})}
+                                className={styles.input}
                             >
                                 <option value="hospedagem">🏨 Hospedagem (Diárias/Temporada)</option>
                                 <option value="alugueis">🏠 Aluguéis (Mensal/Anual)</option>
@@ -301,6 +342,30 @@ export default function PerfilPage() {
                             </select>
                         </div>
                     </div>
+                </section>
+                
+                {/* ÁREAS DE ATUAÇÃO */}
+                <section className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h2>🎯 Áreas de Atuação</h2>
+                        <p>Selecione os tipos de imóveis que você trabalha. Isso filtrará as opções na criação de anúncios.</p>
+                    </div>
+
+                    <div className={styles.atuacaoGrid}>
+                        {currentAtuacaoOptions.map(opt => (
+                            <label key={opt.value} className={styles.atuacaoItem}>
+                                <input 
+                                    type="checkbox"
+                                    checked={tenantForm.atuacao_especifica.includes(opt.value)}
+                                    onChange={() => handleAtuacaoToggle(opt.value)}
+                                />
+                                <span>{opt.label}</span>
+                            </label>
+                        ))}
+                    </div>
+                    {currentAtuacaoOptions.length === 0 && (
+                        <p className={styles.hint}>Escolha um Módulo Principal para ver as opções.</p>
+                    )}
                 </section>
 
                 {/* DADOS DA EMPRESA */}
@@ -325,6 +390,7 @@ export default function PerfilPage() {
                                 value={tenantForm.name}
                                 onChange={e => setTenantForm({...tenantForm, name: e.target.value})}
                                 placeholder="Ex: Imobiliária Sol"
+                                className={styles.input}
                             />
                         </div>
                         <div className={styles.field}>
@@ -332,6 +398,7 @@ export default function PerfilPage() {
                             <select
                                 value={tenantForm.business_type}
                                 onChange={e => setTenantForm({...tenantForm, business_type: e.target.value})}
+                                className={styles.input}
                             >
                                 <option value="PJ">Pessoa Jurídica (CNPJ)</option>
                                 <option value="PF">Pessoa Física (CPF)</option>
@@ -344,6 +411,7 @@ export default function PerfilPage() {
                                 value={tenantForm.document}
                                 onChange={e => setTenantForm({...tenantForm, document: e.target.value})}
                                 placeholder="00.000.000/0000-00"
+                                className={styles.input}
                             />
                         </div>
                         <div className={styles.field}>
@@ -353,6 +421,7 @@ export default function PerfilPage() {
                                 value={tenantForm.whatsapp}
                                 onChange={e => setTenantForm({...tenantForm, whatsapp: e.target.value})}
                                 placeholder="(00) 99999-9999"
+                                className={styles.input}
                             />
                         </div>
                     </div>
@@ -412,6 +481,7 @@ export default function PerfilPage() {
                                 value={tenantForm.cep ? tenantForm.cep.replace(/(\d{5})(\d)/, '$1-$2') : ''}
                                 onChange={e => setTenantForm({...tenantForm, cep: e.target.value.replace(/\D/g, '').substring(0, 8)})}
                                 placeholder="00000-000"
+                                className={styles.input}
                             />
                         </div>
                         <div className={styles.field} style={{ gridColumn: 'span 2' }}>
@@ -421,6 +491,7 @@ export default function PerfilPage() {
                                 value={tenantForm.address}
                                 onChange={e => setTenantForm({...tenantForm, address: e.target.value})}
                                 placeholder="Digite o nome da rua..."
+                                className={styles.input}
                             />
                         </div>
                         <div className={styles.field}>
@@ -430,6 +501,7 @@ export default function PerfilPage() {
                                 value={tenantForm.number}
                                 onChange={e => setTenantForm({...tenantForm, number: e.target.value})}
                                 placeholder="Digite o número..."
+                                className={styles.input}
                             />
                         </div>
                         <div className={styles.field}>
@@ -439,6 +511,7 @@ export default function PerfilPage() {
                                 value={tenantForm.neighborhood}
                                 onChange={e => setTenantForm({...tenantForm, neighborhood: e.target.value})}
                                 placeholder="Digite o bairro..."
+                                className={styles.input}
                             />
                         </div>
                         <div className={styles.field} style={{ gridColumn: 'span 2' }}>
@@ -448,6 +521,7 @@ export default function PerfilPage() {
                                 value={tenantForm.complement}
                                 onChange={e => setTenantForm({...tenantForm, complement: e.target.value})}
                                 placeholder="Ex: Sala 101, Ao lado do mercado..."
+                                className={styles.input}
                             />
                         </div>
                     </div>
@@ -477,6 +551,7 @@ export default function PerfilPage() {
                                 value={passwordForm.newPassword}
                                 onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})}
                                 placeholder="Mínimo 6 caracteres"
+                                className={styles.input}
                             />
                         </div>
                         <div className={styles.field}>
@@ -485,6 +560,7 @@ export default function PerfilPage() {
                                 type="password" 
                                 value={passwordForm.confirmPassword}
                                 onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                                className={styles.input}
                             />
                         </div>
                     </div>

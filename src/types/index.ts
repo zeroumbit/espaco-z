@@ -86,6 +86,7 @@ export interface Tenant {
     complement?: string;
     latitude?: number;
     longitude?: number;
+    atuacao_especifica?: string[];
     created_at: string;
     updated_at: string;
 }

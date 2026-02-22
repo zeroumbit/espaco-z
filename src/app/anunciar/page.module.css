@@ -3,34 +3,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-12) var(--space-4);
-    background: white;
+    padding: var(--space-8) var(--space-4);
+    background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F0FDF4 100%);
 }
 
 .formCard {
     width: 100%;
-    max-width: 650px;
+    max-width: 700px;
     background: var(--neutral-0);
     border: 1px solid var(--neutral-200);
     border-radius: var(--radius-2xl);
     padding: var(--space-10);
-    box-shadow: var(--shadow-xl);
+    box-shadow:
+        0 20px 60px -10px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
+/* ---- Header ---- */
 .header {
     text-align: center;
-    margin-bottom: var(--space-12);
+    margin-bottom: var(--space-8);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-3);
 }
 
 .logoContainer {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-2);
     text-decoration: none;
     transition: transform var(--transition-base);
 }
@@ -40,21 +43,21 @@
 }
 
 .logoIcon {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
     border-radius: var(--radius-lg);
     background: linear-gradient(135deg, var(--primary-600), var(--primary-400));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--text-2xl);
+    font-size: var(--text-xl);
     font-weight: 800;
     color: white;
-    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
 }
 
 .logoText {
-    font-size: var(--text-3xl);
+    font-size: var(--text-2xl);
     font-weight: 800;
     color: var(--neutral-900);
     letter-spacing: -1px;
@@ -65,193 +68,128 @@
 }
 
 .title {
-    font-size: var(--text-3xl);
+    font-size: var(--text-2xl);
     font-weight: 800;
     color: var(--neutral-900);
-    margin: 0 0 var(--space-2) 0;
+    margin: 0;
 }
 
 .subtitle {
     color: var(--neutral-500);
     margin: 0;
-}
-
-.form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-}
-
-.section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-}
-
-.sectionTitle {
     font-size: var(--text-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--primary-600);
-    font-weight: 700;
-    margin-bottom: var(--space-1);
-    border-bottom: 2px solid var(--primary-100);
-    padding-bottom: var(--space-2);
 }
 
-.moduleGrid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-4);
+/* ---- Progress Bar ---- */
+.progressBar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: var(--space-8);
+    padding: 0 var(--space-4);
 }
 
-.moduleBtn {
+.progressItem {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    position: relative;
+    flex: 1;
+}
+
+.progressLine {
+    position: absolute;
+    top: 18px;
+    right: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--neutral-200);
+    z-index: 0;
+    transition: background 0.3s ease;
+}
+
+.progressLineDone {
+    background: var(--primary-500);
+}
+
+.progressDot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    background: var(--neutral-50);
-    border: 1px solid var(--neutral-200);
-    border-radius: var(--radius-xl);
-    cursor: pointer;
-    transition: all var(--transition-base);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    z-index: 1;
+    transition: all 0.3s ease;
+    background: var(--neutral-100);
+    border: 2px solid var(--neutral-200);
+    color: var(--neutral-400);
 }
 
-.moduleIcon {
-    font-size: 2rem;
+.progressDotActive {
+    background: var(--primary-600);
+    border-color: var(--primary-600);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    transform: scale(1.1);
 }
 
-.moduleLabel {
+.progressDotDone {
+    background: var(--primary-100);
+    border-color: var(--primary-500);
+    color: var(--primary-600);
+}
+
+.progressLabel {
     font-size: var(--text-xs);
+    color: var(--neutral-400);
     font-weight: 600;
-    color: var(--neutral-600);
-}
-
-.moduleActive {
-    background: var(--primary-50);
-    border-color: var(--primary-500);
-    transform: scale(1.02);
-}
-
-.moduleActive .moduleLabel {
-    color: var(--primary-700);
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-6);
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.field label {
-    font-size: var(--text-sm);
-    color: var(--neutral-700);
-    font-weight: 600;
-}
-
-.field input {
-    width: 100%;
-    background: var(--neutral-0);
-    border: 1.5px solid var(--neutral-200);
-    border-radius: var(--radius-lg);
-    padding: var(--space-3) var(--space-4);
-    color: var(--neutral-900);
-    outline: none;
-    transition: all var(--transition-base);
-}
-
-.field input:focus {
-    border-color: var(--primary-500);
-    background: var(--neutral-0);
-    box-shadow: 0 0 0 4px var(--primary-50);
-}
-
-.field select {
-    width: 100%;
-    background: var(--neutral-0);
-    border: 1.5px solid var(--neutral-200);
-    border-radius: var(--radius-lg);
-    padding: var(--space-3) var(--space-4);
-    color: var(--neutral-900);
-    outline: none;
-    transition: all var(--transition-base);
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right var(--space-3) center;
-    padding-right: calc(var(--space-4) + 20px);
-}
-
-.field select:disabled {
-    background-color: var(--neutral-100);
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.field select:focus {
-    border-color: var(--primary-500);
-    background: var(--neutral-0);
-    box-shadow: 0 0 0 4px var(--primary-50);
-}
-
-.passwordContainer {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.passwordContainer input {
-    flex: 1;
-    padding-right: calc(var(--space-4) + 30px); /* Espaço para o botão de olho */
-}
-
-.togglePassword {
-    position: absolute;
-    right: var(--space-3);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: var(--space-1);
-    border-radius: var(--radius-md);
-    color: var(--neutral-500);
-    transition: color var(--transition-fast);
-}
-
-.togglePassword:hover {
-    color: var(--neutral-700);
-}
-
-.radioGroup {
-    display: inline-flex;
-    gap: var(--space-6);
-    padding: var(--space-2) 0;
-    flex-wrap: nowrap;
-}
-
-.radioLabel {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--neutral-700);
-    font-size: var(--text-sm);
-    cursor: pointer;
     white-space: nowrap;
+    transition: color 0.3s ease;
 }
 
+.progressLabelActive {
+    color: var(--primary-700);
+    font-weight: 700;
+}
+
+/* ---- Step Content ---- */
+.stepContent {
+    margin-bottom: var(--space-6);
+}
+
+/* ---- Error ---- */
+.error {
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: var(--error-600);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    text-align: center;
+    margin-bottom: var(--space-4);
+    animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+/* ---- Terms ---- */
 .termsWrapper {
     background: var(--neutral-50);
     padding: var(--space-4);
     border: 1px solid var(--neutral-200);
     border-radius: var(--radius-lg);
+    margin-bottom: var(--space-6);
 }
 
 .checkboxLabel {
@@ -269,31 +207,77 @@
     text-decoration: underline;
 }
 
-.error {
-    background: #fef2f2;
-    border: 1px solid #fee2e2;
-    color: var(--error-600);
-    padding: var(--space-4);
+/* ---- Actions ---- */
+.actions {
+    display: flex;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.backBtn {
+    padding: var(--space-4) var(--space-6);
     border-radius: var(--radius-lg);
-    font-size: var(--text-sm);
-    text-align: center;
+    font-weight: 700;
+    font-size: var(--text-base);
+    background: var(--neutral-100);
+    color: var(--neutral-700);
+    border: 1px solid var(--neutral-200);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.backBtn:hover:not(:disabled) {
+    background: var(--neutral-200);
+}
+
+.backBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nextBtn {
+    flex: 1;
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-lg);
+    font-weight: 700;
+    font-size: var(--text-base);
+    background: var(--primary-600);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+.nextBtn:hover:not(:disabled) {
+    background: var(--primary-700);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+}
+
+.nextBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .submitBtn {
-    background: var(--primary-600);
-    color: white;
-    padding: var(--space-5);
+    flex: 1;
+    padding: var(--space-5) var(--space-6);
     border-radius: var(--radius-lg);
     font-weight: 800;
     font-size: var(--text-lg);
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    color: white;
+    border: none;
+    cursor: pointer;
     transition: all var(--transition-base);
-    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
 }
 
 .submitBtn:hover:not(:disabled) {
-    background: var(--primary-700);
+    background: linear-gradient(135deg, var(--primary-700), var(--primary-600));
     transform: translateY(-2px);
-    box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 12px 28px rgba(79, 70, 229, 0.4);
 }
 
 .submitBtn:disabled {
@@ -301,10 +285,12 @@
     cursor: not-allowed;
 }
 
+/* ---- Login Link ---- */
 .loginLink {
     text-align: center;
     font-size: var(--text-sm);
     color: var(--neutral-500);
+    margin: 0;
 }
 
 .loginLink a {
@@ -313,37 +299,29 @@
     text-decoration: none;
 }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.loginLink a:hover {
+    text-decoration: underline;
 }
 
-.inputWrapper {
-    width: 100%;
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.inputWrapper select {
-    flex: 1;
-    padding-right: calc(var(--space-4) + 20px); /* Espaço para o ícone */
-}
-
-.spinner {
-    position: absolute;
-    right: var(--space-3);
-    color: var(--primary-600);
-    animation: spin 1s linear infinite;
-    pointer-events: none;
-}
-
+/* ---- Responsive ---- */
 @media (max-width: 600px) {
-    .grid {
-        grid-template-columns: 1fr;
+    .container {
+        padding: var(--space-4) var(--space-3);
     }
 
-    .moduleGrid {
-        grid-template-columns: 1fr;
+    .formCard {
+        padding: var(--space-6);
+    }
+
+    .progressLabel {
+        display: none;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .backBtn {
+        text-align: center;
     }
 }

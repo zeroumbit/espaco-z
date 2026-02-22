@@ -46,6 +46,7 @@ export default function NewSpaceWizard() {
     const [error, setError] = useState('');
     const [orgId, setOrgId] = useState<string | null>(null);
     const [userModule, setUserModule] = useState<TipoModulo | null>(null);
+    const [atuacaoEspecifica, setAtuacaoEspecifica] = useState<string[]>([]);
 
     const [property, setProperty] = useState<PropertyFormData>(initialProperty);
     const [listing, setListing] = useState<ListingFormData>(initialListing);
@@ -60,13 +61,14 @@ export default function NewSpaceWizard() {
             // Fallback para schema antigo (profiles/tenants)
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('tenant_id, tenants(main_module)')
+                .select('tenant_id, tenants(main_module, atuacao_especifica)')
                 .eq('user_id', user.id)
                 .single();
 
             if (profile?.tenant_id) {
                 setOrgId(profile.tenant_id);
-                const tenantModule = (profile as any)?.tenants?.main_module;
+                const tenantData = (profile as any)?.tenants;
+                const tenantModule = tenantData?.main_module;
                 if (tenantModule) {
                     const mapped: Record<string, TipoModulo> = {
                         'hospedagem': 'hospedagem',
@@ -76,6 +78,10 @@ export default function NewSpaceWizard() {
                     const mod = mapped[tenantModule] || tenantModule;
                     setUserModule(mod as TipoModulo);
                     setListing(prev => ({ ...prev, modulo: mod as TipoModulo }));
+                }
+                // Carregar atuação específica
+                if (tenantData?.atuacao_especifica && Array.isArray(tenantData.atuacao_especifica)) {
+                    setAtuacaoEspecifica(tenantData.atuacao_especifica);
                 }
             }
         }
@@ -264,7 +270,17 @@ export default function NewSpaceWizard() {
                                     <label className={styles.label}>Tipo de imóvel *</label>
                                     <select className={styles.select} value={property.tipo_imovel}
                                         onChange={e => setProperty({ ...property, tipo_imovel: e.target.value })}>
-                                        {TIPOS_IMOVEL[modulo].map(t => (
+                                        {(() => {
+                                            // Filtra os tipos de imóvel com base na atuação específica do tenant
+                                            const allTypes = TIPOS_IMOVEL[modulo];
+                                            if (atuacaoEspecifica.length === 0) return allTypes;
+                                            const filtered = allTypes.filter(t =>
+                                                atuacaoEspecifica.some(a =>
+                                                    t.value === a || t.label.toLowerCase().includes(a.replace('_', ' '))
+                                                )
+                                            );
+                                            return filtered.length > 0 ? filtered : allTypes;
+                                        })().map(t => (
                                             <option key={t.value} value={t.value}>{t.label}</option>
                                         ))}
                                     </select>

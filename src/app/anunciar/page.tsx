@@ -212,9 +212,23 @@ export default function RegisterAdvertiserPage() {
 
             console.log('[Cadastro] Perfil processado com sucesso.');
 
-            // 4. Redirecionar para o Dashboard com reload completo para garantir que o server-side pegue os novos dados
+            // 4. Refresh da sessão e redirecionamento
+            // Aguardamos a replicação do banco e fazemos refresh dos cookies de auth
+            console.log('[Cadastro] Aguardando replicação do banco e refresh da sessão...');
+            
+            // Delay para replicação do banco (tenant/profile)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Refresh explícito da sessão para garantir cookies atualizados
+            try {
+                const { data: sessionData } = await supabase.auth.getSession();
+                console.log('[Cadastro] Sessão refresh:', sessionData?.session ? 'OK' : 'SEM SESSÃO');
+            } catch (err) {
+                console.warn('[Cadastro] Erro ao refresh session:', err);
+            }
+            
             console.log('[Cadastro] Redirecionando para /dashboard...');
-            window.location.href = '/dashboard';
+            router.push('/dashboard');
 
         } catch (err: any) {
             console.error('Erro no cadastro:', err);

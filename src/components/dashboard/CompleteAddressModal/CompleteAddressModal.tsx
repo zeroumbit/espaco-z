@@ -93,6 +93,8 @@ export default function CompleteAddressModal({ tenantId, onComplete }: CompleteA
             setTimeout(() => {
                 setIsOpen(false);
                 onComplete();
+                // Recarrega a página para garantir que todos os dados estejam sincronizados
+                window.location.reload();
             }, 2000);
         } catch (err: any) {
             console.error('[Modal] Erro ao salvar endereço:', err);

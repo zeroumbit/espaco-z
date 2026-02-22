@@ -231,18 +231,20 @@
 }
 
 .radioGroup {
-    display: flex;
+    display: inline-flex;
     gap: var(--space-6);
     padding: var(--space-2) 0;
+    flex-wrap: nowrap;
 }
 
 .radioLabel {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     color: var(--neutral-700);
     font-size: var(--text-sm);
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .termsWrapper {

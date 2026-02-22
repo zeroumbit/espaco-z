@@ -24,27 +24,46 @@ export default async function DashboardLayout({
         let tenant = null;
         const isSuperAdmin = user.email === 'zeroumbit@gmail.com';
 
-        // Tentar até 3 vezes buscar o perfil em caso de ausência (latência de replicação)
-        for (let attempt = 1; attempt <= 3; attempt++) {
+        // Tentar até 5 vezes buscar o perfil em caso de ausência (latência de replicação)
+        for (let attempt = 1; attempt <= 5; attempt++) {
             try {
                 const { data: profileData, error } = await supabase
                     .from('profiles')
                     .select('role, tenant_id, tenants(id)')
                     .eq('user_id', user.id)
                     .single();
-                
+
                 if (!error && profileData) {
                     profile = profileData;
                     tenant = (profileData as any).tenants;
+                    console.log(`[Dashboard Layout] Perfil encontrado na tentativa ${attempt}`);
                     break; // Sucesso! Sai do loop
                 }
 
-                if (attempt < 3) {
+                if (attempt < 5) {
                     console.log(`[Dashboard Layout] Tentativa ${attempt} falhou. Aguardando sincronização...`);
-                    await new Promise(resolve => setTimeout(resolve, 800 * attempt)); // Delay progressivo
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Delay progressivo (1s, 2s, 3s...)
                 }
             } catch (err) {
                 console.error(`[Dashboard Layout] Erro na tentativa ${attempt}:`, err);
+            }
+        }
+
+        // Tentativa final: buscar tenant diretamente se profile falhou
+        if (!tenant && profile) {
+            try {
+                const { data: tenantData } = await supabase
+                    .from('tenants')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                if (tenantData) {
+                    console.log('[Dashboard Layout] Tenant encontrado diretamente, profile sem tenant_id');
+                    tenant = tenantData;
+                }
+            } catch (err) {
+                console.warn('[Dashboard Layout] Não foi possível buscar tenant diretamente:', err);
             }
         }
 
@@ -53,7 +72,7 @@ export default async function DashboardLayout({
             profile.role === 'anunciante' ||
             profile.role === 'admin' ||
             profile.tenant_id != null
-        ));
+        )) || tenant; // Permite acesso se encontrou tenant diretamente
 
         if (isSuperAdmin) {
             console.log('[Dashboard Layout] Acesso Super Admin concedido via Master Email');

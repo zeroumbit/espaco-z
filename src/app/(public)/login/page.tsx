@@ -22,50 +22,86 @@ export default function LoginPage() {
         setError('');
 
         try {
-            const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
 
             if (authError) throw authError;
 
-            if (user) {
-                console.log('[Login] Sucesso Auth. User ID:', user.id, 'Email:', user.email);
+            const user = authData.user;
+            if (!user) throw new Error('Erro ao autenticar usuário.');
 
-                // Fetch profile to get role and tenant_id
-                const { data: profile, error: profileError } = await supabase
+            console.log('[Login] Sucesso Auth. User ID:', user.id, 'Email:', user.email);
+
+            // Aguarda propagação da sessão
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Fetch profile com retentativas (latência de replicação)
+            let profile = null;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                const { data: profileData, error: profileError } = await supabase
                     .from('profiles')
                     .select('role, tenant_id')
                     .eq('user_id', user.id)
                     .single();
 
-                console.log('[Login] Profile:', profile, 'Erro:', profileError);
-
-                if (profileError && user?.email !== 'zeroumbit@gmail.com') {
-                    console.error('[Login] Erro ao buscar perfil:', profileError);
-                    window.location.replace('/');
-                    return;
+                if (!profileError && profileData) {
+                    profile = profileData;
+                    console.log('[Login] Profile encontrado na tentativa', attempt);
+                    break;
                 }
 
-                // Lógica de Redirecionamento Robusta
-                let targetPath = '/';
-                const userRole = profile?.role;
-                const userEmailFix = user.email; // Já temos userEmail acima, mas mantendo clareza
-                const hasTenant = !!profile?.tenant_id;
-
-                // Se for admin (Verificação Dupla: Role ou Email Mestre)
-                if (userRole === 'admin' || userEmailFix === 'zeroumbit@gmail.com') {
-                    targetPath = '/admin';
-                } else if (userRole === 'anunciante' || hasTenant) {
-                    // Se tem role anunciante OU se tem tenant_id (cadastrou empresa)
-                    targetPath = '/dashboard';
+                if (attempt < 3) {
+                    console.log(`[Login] Tentativa ${attempt} falhou. Aguardando...`);
+                    await new Promise(resolve => setTimeout(resolve, 800 * attempt));
                 }
-
-                console.log(`[Login] Role: ${userRole}, Email: ${userEmailFix}, Tenant: ${profile?.tenant_id} -> Destino: ${targetPath}`);
-
-                // Força o redirecionamento com recarregamento completo para limpar estados de memória
-                window.location.href = targetPath;
             }
+
+            console.log('[Login] Profile final:', profile);
+
+            // Busca tenant diretamente se profile não tiver tenant_id
+            let hasTenant = !!profile?.tenant_id;
+            if (!hasTenant && profile) {
+                const { data: tenantData } = await supabase
+                    .from('tenants')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                if (tenantData) {
+                    console.log('[Login] Tenant encontrado diretamente');
+                    hasTenant = true;
+                }
+            }
+
+            // Lógica de Redirecionamento
+            let targetPath = '/dashboard'; // Default para anunciantes
+            const userRole = profile?.role;
+            const isSuperAdmin = user.email === 'zeroumbit@gmail.com';
+
+            if (isSuperAdmin || userRole === 'admin') {
+                targetPath = '/admin';
+            } else if (userRole === 'anunciante' || hasTenant || userRole === 'usuario') {
+                targetPath = '/dashboard';
+            }
+
+            console.log(`[Login] Role: ${userRole}, Tenant: ${hasTenant}, Admin: ${isSuperAdmin} -> Destino: ${targetPath}`);
+
+            // Refresh da sessão antes de redirecionar
+            await supabase.auth.getSession();
+
+            // Usa router.push para navegação client-side adequada
+            router.push(targetPath);
+            
+            // Fallback: se após 3s ainda estiver na página de login, força reload
+            setTimeout(() => {
+                if (window.location.pathname.includes('/login')) {
+                    console.log('[Login] Fallback: router.push falhou, usando window.location');
+                    window.location.href = targetPath;
+                }
+            }, 3000);
+
         } catch (err: any) {
             console.error('Erro completo de autenticação:', err);
             setError(err.message || 'Ocorreu um erro na autenticação.');

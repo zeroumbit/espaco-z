@@ -9,6 +9,21 @@ export type StatusListing = 'rascunho' | 'ativo' | 'pausado' | 'expirado' | 'ven
 export type UserRoleV3 = 'owner' | 'admin' | 'editor' | 'corretor';
 export type TipoAnunciante = 'pf' | 'pj';
 
+// ---- Hospedagem: Subcategorias de Unidade Alugável ----
+export type HospedagemTipoImovel =
+    | 'quarto_hotel'
+    | 'quarto_pousada'
+    | 'quarto_resort'
+    | 'cama_albergue'
+    | 'casa_inteira'
+    | 'apartamento_inteiro'
+    | 'quarto_privativo'
+    | 'quarto_compartilhado'
+    | 'acomodacao_unica';
+
+// Categorias de comportamento da UI
+export type HospedagemCategoria = 'propriedade_inteira' | 'quarto_privado' | 'espaco_compartilhado';
+
 // ---- Organization (Tenant) ----
 export interface Organization {
     id: string;
@@ -78,6 +93,12 @@ export interface Property {
     // Conservação
     ano_construcao?: number;
     estado_conservacao?: string;
+
+    // Campos condicionais de hospedagem
+    banheiro_privativo?: boolean;
+    tipo_cama?: string;
+    total_camas_quarto?: number;
+    locker_disponivel?: boolean;
 
     // Endereço
     cep?: string;
@@ -255,6 +276,12 @@ export interface PropertyFormData {
 
     // Comodidades
     amenities: string[];
+
+    // Campos condicionais de hospedagem (salvos no banco junto com a property)
+    banheiro_privativo: boolean;
+    tipo_cama: string; // 'king' | 'queen' | 'casal' | 'solteiro' | 'beliche'
+    total_camas_quarto: number; // para quarto_compartilhado / cama_albergue
+    locker_disponivel: boolean; // para albergue
 }
 
 export interface ListingFormData {

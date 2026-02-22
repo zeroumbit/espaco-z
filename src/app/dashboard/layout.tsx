@@ -94,9 +94,10 @@ export default async function DashboardLayout({
                 <OnboardingWrapper tenant={tenant} />
             </div>
         );
-    } catch (err) {
-        if (err instanceof Error && err.message === 'NEXT_REDIRECT') {
-            throw err; // Re-throw redirect errors so Next.js can handle them
+    } catch (err: any) {
+        // Se for um erro do Next.js (redirect ou digest de dynamic usage), re-lança
+        if (err?.message?.includes('NEXT_REDIRECT') || err?.digest?.includes('DYNAMIC_SERVER_USAGE')) {
+            throw err;
         }
         console.error('[Dashboard Layout] Global Crash:', err);
         // Fallback UI or simple error message

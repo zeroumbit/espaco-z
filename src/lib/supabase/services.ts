@@ -49,6 +49,11 @@ export const ListingService = {
                     cidade: propertyData.cidade,
                     estado: propertyData.estado,
                     amenities: propertyData.amenities, // Array string
+                    // Campos condicionais de hospedagem
+                    banheiro_privativo: propertyData.banheiro_privativo ?? null,
+                    tipo_cama: propertyData.tipo_cama || null,
+                    total_camas_quarto: propertyData.total_camas_quarto ?? null,
+                    locker_disponivel: propertyData.locker_disponivel ?? null,
                 }])
                 .select()
                 .single();

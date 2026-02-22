@@ -3,12 +3,12 @@ import { TipoModulo } from '@/types/listings';
 // ---- Tipos de Imóvel por Módulo ----
 export const TIPOS_IMOVEL: Record<TipoModulo, { value: string; label: string }[]> = {
     hospedagem: [
-        { value: 'hotel', label: 'Hotel' },
-        { value: 'pousada', label: 'Pousada' },
-        { value: 'resort', label: 'Resort' },
-        { value: 'albergue', label: 'Albergue' },
-        { value: 'casa', label: 'Casa' },
-        { value: 'apartamento', label: 'Apartamento' },
+        { value: 'quarto_hotel', label: 'Quarto de Hotel' },
+        { value: 'quarto_pousada', label: 'Quarto de Pousada' },
+        { value: 'quarto_resort', label: 'Quarto de Resort' },
+        { value: 'cama_albergue', label: 'Cama em Albergue' },
+        { value: 'casa_inteira', label: 'Casa Inteira' },
+        { value: 'apartamento_inteiro', label: 'Apartamento Inteiro' },
         { value: 'quarto_privativo', label: 'Quarto Privativo' },
         { value: 'quarto_compartilhado', label: 'Quarto Compartilhado' },
         { value: 'acomodacao_unica', label: 'Acomodação Única' },

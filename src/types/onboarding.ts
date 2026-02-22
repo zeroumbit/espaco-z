@@ -23,12 +23,12 @@ export type AtuacaoEspecifica = string;
 
 export const ATUACAO_OPTIONS: Record<MainModule, { value: string; label: string; icon: string }[]> = {
     hospedagem: [
-        { value: 'hotel', label: 'Hotel', icon: '🏨' },
-        { value: 'pousada', label: 'Pousada', icon: '🛖' },
-        { value: 'resort', label: 'Resort', icon: '🏝️' },
-        { value: 'albergue', label: 'Albergue', icon: '🛏️' },
-        { value: 'casa', label: 'Casa', icon: '🏠' },
-        { value: 'apartamento', label: 'Apartamento', icon: '🏢' },
+        { value: 'quarto_hotel', label: 'Quarto de Hotel', icon: '🏨' },
+        { value: 'quarto_pousada', label: 'Quarto de Pousada', icon: '🛖' },
+        { value: 'quarto_resort', label: 'Quarto de Resort', icon: '🏝️' },
+        { value: 'cama_albergue', label: 'Cama em Albergue', icon: '🛏️' },
+        { value: 'casa_inteira', label: 'Casa Inteira', icon: '🏠' },
+        { value: 'apartamento_inteiro', label: 'Apartamento Inteiro', icon: '🏢' },
         { value: 'quarto_privativo', label: 'Quarto Privativo', icon: '🚪' },
         { value: 'quarto_compartilhado', label: 'Quarto Compartilhado', icon: '🛌' },
         { value: 'acomodacao_unica', label: 'Acomodação Única', icon: '⭐' },

@@ -11,17 +11,23 @@ import {
 import { CEARA_CITIES, BRAZILIAN_STATES } from '@/lib/constants';
 import type { TipoModulo, WizardStep, PropertyFormData, ListingFormData } from '@/types/listings';
 import { WIZARD_STEPS } from '@/types/listings';
+import { getHospedagemCategoria } from '@/lib/listings-utils';
 import { ListingService } from '@/lib/supabase/services';
 import styles from './page.module.css';
 
 // ---- Initial States ----
 const initialProperty: PropertyFormData = {
-    titulo: '', descricao: '', tipo_imovel: 'apartamento', subtipo_imovel: '',
+    titulo: '', descricao: '', tipo_imovel: 'quarto_hotel', subtipo_imovel: '',
     area_total: '', area_privativa: '', area_terreno: '',
-    quartos: 2, suites: 0, banheiros_sociais: 1, salas: 1, vagas_garagem: 1,
+    quartos: 1, suites: 0, banheiros_sociais: 1, salas: 0, vagas_garagem: 0,
     ano_construcao: '', estado_conservacao: 'bom',
     cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: 'Fortaleza', estado: 'CE',
     amenities: [],
+    // Campos condicionais de hospedagem
+    banheiro_privativo: true,
+    tipo_cama: 'casal',
+    total_camas_quarto: 1,
+    locker_disponivel: false,
 };
 
 const initialListing: ListingFormData = {
@@ -269,18 +275,32 @@ export default function NewSpaceWizard() {
                                 <div className={styles.formGroup}>
                                     <label className={styles.label}>Tipo de imóvel *</label>
                                     <select className={styles.select} value={property.tipo_imovel}
-                                        onChange={e => setProperty({ ...property, tipo_imovel: e.target.value })}>
-                                        {(() => {
-                                            // Filtra os tipos de imóvel com base na atuação específica do tenant
-                                            const allTypes = TIPOS_IMOVEL[modulo];
-                                            if (atuacaoEspecifica.length === 0) return allTypes;
-                                            const filtered = allTypes.filter(t =>
-                                                atuacaoEspecifica.some(a =>
-                                                    t.value === a || t.label.toLowerCase().includes(a.replace('_', ' '))
-                                                )
-                                            );
-                                            return filtered.length > 0 ? filtered : allTypes;
-                                        })().map(t => (
+                                        onChange={e => {
+                                            const newTipo = e.target.value;
+                                            const newCat = modulo === 'hospedagem'
+                                                ? getHospedagemCategoria(newTipo)
+                                                : 'propriedade_inteira';
+                                            setProperty(prev => ({
+                                                ...prev,
+                                                tipo_imovel: newTipo,
+                                                ...(newCat === 'propriedade_inteira' ? {
+                                                    quartos: 2, salas: 1, vagas_garagem: 1,
+                                                    banheiro_privativo: true, tipo_cama: 'casal',
+                                                    total_camas_quarto: 1, locker_disponivel: false,
+                                                } : {}),
+                                                ...(newCat === 'quarto_privado' ? {
+                                                    quartos: 0, salas: 0, vagas_garagem: 0,
+                                                    banheiro_privativo: true, tipo_cama: 'casal',
+                                                    total_camas_quarto: 1, locker_disponivel: false,
+                                                } : {}),
+                                                ...(newCat === 'espaco_compartilhado' ? {
+                                                    quartos: 0, salas: 0, vagas_garagem: 0,
+                                                    banheiro_privativo: false, tipo_cama: 'beliche',
+                                                    total_camas_quarto: 4, locker_disponivel: true,
+                                                } : {}),
+                                            }));
+                                        }}>
+                                        {TIPOS_IMOVEL[modulo].map(t => (
                                             <option key={t.value} value={t.value}>{t.label}</option>
                                         ))}
                                     </select>
@@ -308,24 +328,96 @@ export default function NewSpaceWizard() {
 
                         <div className={styles.formSection}>
                             <h3 className={styles.formSectionTitle}>🏗️ Composição</h3>
-                            <div className={styles.formGrid4}>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Quartos</label>
-                                    <Counter value={property.quartos} onChange={v => setProperty({ ...property, quartos: v })} />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Suítes</label>
-                                    <Counter value={property.suites} onChange={v => setProperty({ ...property, suites: v })} />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Banheiros</label>
-                                    <Counter value={property.banheiros_sociais} onChange={v => setProperty({ ...property, banheiros_sociais: v })} />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Vagas garagem</label>
-                                    <Counter value={property.vagas_garagem} onChange={v => setProperty({ ...property, vagas_garagem: v })} />
-                                </div>
-                            </div>
+                            {(() => {
+                                const cat = modulo === 'hospedagem'
+                                    ? getHospedagemCategoria(property.tipo_imovel)
+                                    : 'propriedade_inteira';
+
+                                if (cat === 'propriedade_inteira') {
+                                    return (
+                                        <div className={styles.formGrid4}>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Quartos</label>
+                                                <Counter value={property.quartos} onChange={v => setProperty({ ...property, quartos: v })} />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Suítes</label>
+                                                <Counter value={property.suites} onChange={v => setProperty({ ...property, suites: v })} />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Banheiros</label>
+                                                <Counter value={property.banheiros_sociais} onChange={v => setProperty({ ...property, banheiros_sociais: v })} />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Vagas garagem</label>
+                                                <Counter value={property.vagas_garagem} onChange={v => setProperty({ ...property, vagas_garagem: v })} />
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                if (cat === 'quarto_privado') {
+                                    return (
+                                        <div className={styles.formGrid4}>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Tipo de cama</label>
+                                                <select className={styles.select} value={property.tipo_cama}
+                                                    onChange={e => setProperty({ ...property, tipo_cama: e.target.value })}>
+                                                    <option value="king">Casal King</option>
+                                                    <option value="queen">Casal Queen</option>
+                                                    <option value="casal">Casal Padrão</option>
+                                                    <option value="solteiro">Solteiro</option>
+                                                </select>
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Banheiro privativo</label>
+                                                <select className={styles.select}
+                                                    value={property.banheiro_privativo ? 'sim' : 'nao'}
+                                                    onChange={e => setProperty({ ...property, banheiro_privativo: e.target.value === 'sim' })}>
+                                                    <option value="sim">Sim</option>
+                                                    <option value="nao">Não (compartilhado)</option>
+                                                </select>
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Hóspedes máx.</label>
+                                                <Counter value={listing.capacidade_maxima} onChange={v => setListing({ ...listing, capacidade_maxima: v })} min={1} />
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                // espaco_compartilhado: Quarto Compartilhado / Cama em Albergue
+                                return (
+                                    <div className={styles.formGrid4}>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Camas no quarto</label>
+                                            <Counter value={property.total_camas_quarto} onChange={v => setProperty({ ...property, total_camas_quarto: v })} min={1} />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Banheiro compartilhado</label>
+                                            <select className={styles.select}
+                                                value={property.banheiro_privativo ? 'nao' : 'sim'}
+                                                onChange={e => setProperty({ ...property, banheiro_privativo: e.target.value !== 'sim' })}>
+                                                <option value="sim">Sim (compartilhado)</option>
+                                                <option value="nao">Não (privativo)</option>
+                                            </select>
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Locker / Armário c/ cadeado</label>
+                                            <select className={styles.select}
+                                                value={property.locker_disponivel ? 'sim' : 'nao'}
+                                                onChange={e => setProperty({ ...property, locker_disponivel: e.target.value === 'sim' })}>
+                                                <option value="sim">Disponível</option>
+                                                <option value="nao">Não disponível</option>
+                                            </select>
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Hóspedes máx.</label>
+                                            <Counter value={listing.capacidade_maxima} onChange={v => setListing({ ...listing, capacidade_maxima: v })} min={1} />
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         <div className={styles.formSection}>
@@ -427,50 +519,135 @@ export default function NewSpaceWizard() {
                         </p>
 
                         {/* ---- HOSPEDAGEM DETAILS ---- */}
-                        {modulo === 'hospedagem' && (
-                            <>
-                                <div className={styles.formSection}>
-                                    <h3 className={styles.formSectionTitle}>🛏️ Capacidade e Camas</h3>
-                                    <div className={styles.formGrid4}>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Hóspedes máx.</label>
-                                            <Counter value={listing.capacidade_maxima}
-                                                onChange={v => setListing({ ...listing, capacidade_maxima: v })} min={1} />
+                        {modulo === 'hospedagem' && (() => {
+                            const cat = getHospedagemCategoria(property.tipo_imovel);
+                            return (
+                                <>
+                                    {/* Capacidade e camas: apenas para propriedades inteiras */}
+                                    {cat === 'propriedade_inteira' && (
+                                        <div className={styles.formSection}>
+                                            <h3 className={styles.formSectionTitle}>🛏️ Capacidade e Camas</h3>
+                                            <div className={styles.formGrid4}>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Hóspedes máx.</label>
+                                                    <Counter value={listing.capacidade_maxima}
+                                                        onChange={v => setListing({ ...listing, capacidade_maxima: v })} min={1} />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Camas casal</label>
+                                                    <Counter value={listing.camas_casal}
+                                                        onChange={v => setListing({ ...listing, camas_casal: v })} />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Camas solteiro</label>
+                                                    <Counter value={listing.camas_solteiro}
+                                                        onChange={v => setListing({ ...listing, camas_solteiro: v })} />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.label}>Mín. noites</label>
+                                                    <Counter value={listing.minimo_noites}
+                                                        onChange={v => setListing({ ...listing, minimo_noites: v })} min={1} />
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Camas casal</label>
-                                            <Counter value={listing.camas_casal}
-                                                onChange={v => setListing({ ...listing, camas_casal: v })} />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Camas solteiro</label>
-                                            <Counter value={listing.camas_solteiro}
-                                                onChange={v => setListing({ ...listing, camas_solteiro: v })} />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Mín. noites</label>
-                                            <Counter value={listing.minimo_noites}
-                                                onChange={v => setListing({ ...listing, minimo_noites: v })} min={1} />
-                                        </div>
-                                    </div>
-                                </div>
+                                    )}
 
-                                <div className={styles.formSection}>
-                                    <h3 className={styles.formSectionTitle}>🔑 Check-in</h3>
-                                    <div className={styles.formGrid}>
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.label}>Tipo de check-in</label>
-                                            <select className={styles.select} value={listing.tipo_checkin}
-                                                onChange={e => setListing({ ...listing, tipo_checkin: e.target.value })}>
-                                                {TIPOS_CHECKIN.map(t => (
-                                                    <option key={t.value} value={t.value}>{t.label}</option>
-                                                ))}
-                                            </select>
+                                    {/* Comodidades por categoria */}
+                                    <div className={styles.formSection}>
+                                        <h3 className={styles.formSectionTitle}>
+                                            {cat === 'propriedade_inteira' && '🏠 Comodidades da Propriedade'}
+                                            {cat === 'quarto_privado' && '🛏️ Comodidades do Quarto'}
+                                            {cat === 'espaco_compartilhado' && '🏨 Comodidades do Espaço'}
+                                        </h3>
+                                        <div className={styles.amenitiesGrid}>
+                                            {cat === 'propriedade_inteira' && [
+                                                { id: 'cozinha_completa', icon: '🍳', label: 'Cozinha Completa' },
+                                                { id: 'maquina_lavar', icon: '🧧', label: 'Máquina de Lavar' },
+                                                { id: 'garagem', icon: '🚗', label: 'Vaga de Garagem' },
+                                                { id: 'piscina', icon: '🏊', label: 'Piscina' },
+                                                { id: 'churrasqueira', icon: '🔥', label: 'Churrasqueira' },
+                                                { id: 'wifi', icon: '📶', label: 'Wi-Fi' },
+                                                { id: 'ar_condicionado', icon: '❄️', label: 'Ar-condicionado' },
+                                                { id: 'tv_smart', icon: '📺', label: 'TV Smart' },
+                                            ].map(a => (
+                                                <Toggle key={a.id}
+                                                    checked={property.amenities.includes(a.id)}
+                                                    onChange={checked => {
+                                                        const next = checked
+                                                            ? [...property.amenities, a.id]
+                                                            : property.amenities.filter(x => x !== a.id);
+                                                        setProperty({ ...property, amenities: next });
+                                                    }}
+                                                    label={`${a.icon} ${a.label}`}
+                                                />
+                                            ))}
+                                            {cat === 'quarto_privado' && [
+                                                { id: 'frigobar', icon: '🧊', label: 'Frigobar' },
+                                                { id: 'ar_condicionado', icon: '❄️', label: 'Ar-condicionado' },
+                                                { id: 'room_service', icon: '🛎️', label: 'Serviço de Quarto' },
+                                                { id: 'cofre', icon: '🔒', label: 'Cofre' },
+                                                { id: 'tv_smart', icon: '📺', label: 'TV Smart' },
+                                                { id: 'wifi', icon: '📶', label: 'Wi-Fi' },
+                                                { id: 'varanda', icon: '🌅', label: 'Varanda' },
+                                                { id: 'banheira', icon: '🛁', label: 'Banheira / Hidromassagem' },
+                                            ].map(a => (
+                                                <Toggle key={a.id}
+                                                    checked={property.amenities.includes(a.id)}
+                                                    onChange={checked => {
+                                                        const next = checked
+                                                            ? [...property.amenities, a.id]
+                                                            : property.amenities.filter(x => x !== a.id);
+                                                        setProperty({ ...property, amenities: next });
+                                                    }}
+                                                    label={`${a.icon} ${a.label}`}
+                                                />
+                                            ))}
+                                            {cat === 'espaco_compartilhado' && [
+                                                { id: 'wifi', icon: '📶', label: 'Wi-Fi' },
+                                                { id: 'ar_condicionado', icon: '❄️', label: 'Ar-condicionado' },
+                                                { id: 'luz_leitura', icon: '💡', label: 'Luz de Leitura Individual' },
+                                                { id: 'tomada_individual', icon: '🔌', label: 'Tomada por Cama' },
+                                                { id: 'cafe_manha', icon: '☕', label: 'Café da Manhã Incluso' },
+                                                { id: 'area_social', icon: '🛋️', label: 'Área Social / Lounge' },
+                                                { id: 'cozinha_compartilhada', icon: '🍽️', label: 'Cozinha Compartilhada' },
+                                                { id: 'roupa_cama', icon: '🛏️', label: 'Roupa de Cama Incluída' },
+                                            ].map(a => (
+                                                <Toggle key={a.id}
+                                                    checked={property.amenities.includes(a.id)}
+                                                    onChange={checked => {
+                                                        const next = checked
+                                                            ? [...property.amenities, a.id]
+                                                            : property.amenities.filter(x => x !== a.id);
+                                                        setProperty({ ...property, amenities: next });
+                                                    }}
+                                                    label={`${a.icon} ${a.label}`}
+                                                />
+                                            ))}
                                         </div>
                                     </div>
-                                </div>
-                            </>
-                        )}
+
+                                    <div className={styles.formSection}>
+                                        <h3 className={styles.formSectionTitle}>🔑 Check-in</h3>
+                                        <div className={styles.formGrid}>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Tipo de check-in</label>
+                                                <select className={styles.select} value={listing.tipo_checkin}
+                                                    onChange={e => setListing({ ...listing, tipo_checkin: e.target.value })}>
+                                                    {TIPOS_CHECKIN.map(t => (
+                                                        <option key={t.value} value={t.value}>{t.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.label}>Mín. noites</label>
+                                                <Counter value={listing.minimo_noites}
+                                                    onChange={v => setListing({ ...listing, minimo_noites: v })} min={1} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
 
                         {/* ---- ALUGUEL DETAILS ---- */}
                         {modulo === 'aluguel' && (

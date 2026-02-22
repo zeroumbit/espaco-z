@@ -53,9 +53,6 @@ export default function OnboardingWrapper({ tenant }: OnboardingWrapperProps) {
     if (isChecking || !showModal || !tenant) return null;
 
     return (
-        <CompleteAddressModal
-            tenantId={tenant.id}
-            onComplete={() => setShowModal(false)}
-        />
+        <CompleteAddressModal tenantId={tenant.id} />
     );
 }

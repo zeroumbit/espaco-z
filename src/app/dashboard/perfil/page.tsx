@@ -19,12 +19,6 @@ export default function PerfilPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Form states
-    const [profileForm, setProfileForm] = useState({
-        full_name: '',
-        phone: ''
-    });
-
     const [tenantForm, setTenantForm] = useState({
         name: '',
         business_type: 'PJ',
@@ -32,7 +26,12 @@ export default function PerfilPage() {
         main_module: 'hospedagem',
         city: '',
         state: '',
-        whatsapp: ''
+        whatsapp: '',
+        cep: '',
+        address: '',
+        number: '',
+        neighborhood: '',
+        complement: ''
     });
 
     const [passwordForm, setPasswordForm] = useState({
@@ -55,10 +54,6 @@ export default function PerfilPage() {
 
                 if (profileError) throw profileError;
                 setProfile(profileData);
-                setProfileForm({
-                    full_name: profileData.full_name || '',
-                    phone: profileData.phone || ''
-                });
 
                 // Buscar tenant
                 if (profileData.tenant_id) {
@@ -77,7 +72,12 @@ export default function PerfilPage() {
                             main_module: tenantData.main_module || 'hospedagem',
                             city: tenantData.city || '',
                             state: tenantData.state || '',
-                            whatsapp: tenantData.whatsapp || ''
+                            whatsapp: tenantData.whatsapp || '',
+                            cep: tenantData.cep ? tenantData.cep.replace(/(\d{5})(\d)/, '$1-$2') : '',
+                            address: tenantData.address || '',
+                            number: tenantData.number || '',
+                            neighborhood: tenantData.neighborhood || '',
+                            complement: tenantData.complement || ''
                         });
                     }
                 } else {
@@ -135,28 +135,6 @@ export default function PerfilPage() {
         loadCities();
     }, [tenantForm.state]);
 
-    const handleSaveProfile = async () => {
-        setSaving(true);
-        setError('');
-        setSuccess('');
-        try {
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                    full_name: profileForm.full_name,
-                    phone: profileForm.phone
-                })
-                .eq('id', profile.id);
-
-            if (updateError) throw updateError;
-            setSuccess('Dados pessoais atualizados com sucesso!');
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setSaving(false);
-        }
-    };
-
     const handleUpdateTenant = async () => {
         setSaving(true);
         setError('');
@@ -171,7 +149,12 @@ export default function PerfilPage() {
                     main_module: tenantForm.main_module,
                     city: tenantForm.city,
                     state: tenantForm.state,
-                    whatsapp: tenantForm.whatsapp
+                    whatsapp: tenantForm.whatsapp,
+                    cep: tenantForm.cep.replace(/\D/g, ''),
+                    address: tenantForm.address,
+                    number: tenantForm.number,
+                    neighborhood: tenantForm.neighborhood,
+                    complement: tenantForm.complement
                 })
                 .eq('id', tenant.id);
 
@@ -208,6 +191,11 @@ export default function PerfilPage() {
                     document: tenantForm.document,
                     main_module: tenantForm.main_module,
                     whatsapp: tenantForm.whatsapp,
+                    cep: tenantForm.cep.replace(/\D/g, ''),
+                    address: tenantForm.address,
+                    number: tenantForm.number,
+                    neighborhood: tenantForm.neighborhood,
+                    complement: tenantForm.complement,
                     subscription_plan: 'trial',
                     is_active: true
                 })
@@ -219,10 +207,10 @@ export default function PerfilPage() {
             // 2. Vincular ao Perfil e sincronizar dados básicos
             const { error: pError } = await supabase
                 .from('profiles')
-                .update({ 
+                .update({
                     tenant_id: newTenant.id,
                     role: 'anunciante',
-                    phone: profileForm.phone || tenantForm.whatsapp,
+                    phone: tenantForm.whatsapp,
                     city: tenantForm.city,
                     state: tenantForm.state
                 })
@@ -274,41 +262,51 @@ export default function PerfilPage() {
             {success && <div className={styles.successMessage}>{success}</div>}
 
             <div className={styles.sections}>
-                {/* DADOS PESSOAIS */}
+                {/* DADOS DE ACESSO */}
                 <section className={styles.card}>
                     <div className={styles.cardHeader}>
-                        <h2>👤 Dados Pessoais</h2>
-                        <p>Informações de contato do responsável pela conta.</p>
+                        <h2>📧 Dados de Acesso</h2>
+                        <p>Seu e-mail de acesso à plataforma.</p>
                     </div>
                     <div className={styles.grid}>
-                        <div className={styles.field}>
-                            <label>Nome Completo</label>
-                            <input 
-                                type="text" 
-                                value={profileForm.full_name}
-                                onChange={e => setProfileForm({...profileForm, full_name: e.target.value})}
-                                placeholder="Seu nome"
-                            />
-                        </div>
-                        <div className={styles.field}>
-                            <label>Telefone / WhatsApp</label>
-                            <input 
-                                type="text" 
-                                value={profileForm.phone}
-                                onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
-                                placeholder="(00) 00000-0000"
+                        <div className={styles.field} style={{ gridColumn: 'span 3' }}>
+                            <label>E-mail</label>
+                            <input
+                                type="email"
+                                value={profile?.email || ''}
+                                disabled
+                                className={styles.inputDisabled}
                             />
                         </div>
                     </div>
-                    <button className={styles.saveBtn} onClick={handleSaveProfile} disabled={saving}>
-                        {saving ? 'Salvando...' : 'Atualizar Dados Pessoais'}
-                    </button>
                 </section>
 
-                {/* EMPRESA / ONBOARDING */}
+                {/* TIPO DE ANÚNCIO */}
                 <section className={styles.card}>
                     <div className={styles.cardHeader}>
-                        <h2>🏢 Empresa / Profissional</h2>
+                        <h2>📢 Tipo de Anúncio</h2>
+                        <p>Defina como você deseja anunciar na plataforma.</p>
+                    </div>
+
+                    <div className={styles.grid}>
+                        <div className={styles.field}>
+                            <label>Módulo Principal</label>
+                            <select
+                                value={tenantForm.main_module}
+                                onChange={e => setTenantForm({...tenantForm, main_module: e.target.value})}
+                            >
+                                <option value="hospedagem">🏨 Hospedagem (Diárias/Temporada)</option>
+                                <option value="alugueis">🏠 Aluguéis (Mensal/Anual)</option>
+                                <option value="vendas">🏡 Vendas (Compra e Venda)</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                {/* DADOS DA EMPRESA */}
+                <section className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h2>🏢 Dados da Empresa</h2>
                         <p>{tenant ? 'Gerencie os dados públicos da sua empresa.' : 'Complete seu cadastro para começar a anunciar.'}</p>
                     </div>
 
@@ -321,20 +319,9 @@ export default function PerfilPage() {
 
                     <div className={styles.grid}>
                         <div className={styles.field}>
-                            <label>Módulo Principal</label>
-                            <select 
-                                value={tenantForm.main_module}
-                                onChange={e => setTenantForm({...tenantForm, main_module: e.target.value})}
-                            >
-                                <option value="hospedagem">🏨 Hospedagem (Diárias/Temporada)</option>
-                                <option value="alugueis">🏠 Aluguéis (Mensal/Anual)</option>
-                                <option value="vendas">🏡 Vendas (Compra e Venda)</option>
-                            </select>
-                        </div>
-                        <div className={styles.field}>
                             <label>Nome Fantasia / Nome Público</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 value={tenantForm.name}
                                 onChange={e => setTenantForm({...tenantForm, name: e.target.value})}
                                 placeholder="Ex: Imobiliária Sol"
@@ -342,7 +329,7 @@ export default function PerfilPage() {
                         </div>
                         <div className={styles.field}>
                             <label>Tipo de Pessoa</label>
-                            <select 
+                            <select
                                 value={tenantForm.business_type}
                                 onChange={e => setTenantForm({...tenantForm, business_type: e.target.value})}
                             >
@@ -352,8 +339,8 @@ export default function PerfilPage() {
                         </div>
                         <div className={styles.field}>
                             <label>{tenantForm.business_type === 'PJ' ? 'CNPJ' : 'CPF'}</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 value={tenantForm.document}
                                 onChange={e => setTenantForm({...tenantForm, document: e.target.value})}
                                 placeholder="00.000.000/0000-00"
@@ -361,17 +348,28 @@ export default function PerfilPage() {
                         </div>
                         <div className={styles.field}>
                             <label>WhatsApp Público</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 value={tenantForm.whatsapp}
                                 onChange={e => setTenantForm({...tenantForm, whatsapp: e.target.value})}
                                 placeholder="(00) 99999-9999"
                             />
                         </div>
+                    </div>
+                </section>
+
+                {/* LOCALIZAÇÃO */}
+                <section className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h2>📍 Localização</h2>
+                        <p>Endereço completo da sua empresa.</p>
+                    </div>
+
+                    <div className={styles.grid}>
                         <div className={styles.field}>
-                            <label>Estado Atuação</label>
+                            <label>Estado</label>
                             <div className={styles.inputWrapper}>
-                                <select 
+                                <select
                                     value={tenantForm.state}
                                     onChange={e => setTenantForm({...tenantForm, state: e.target.value, city: ''})}
                                     className={styles.input}
@@ -386,9 +384,9 @@ export default function PerfilPage() {
                             </div>
                         </div>
                         <div className={styles.field}>
-                            <label>Cidade Atuação</label>
+                            <label>Cidade</label>
                             <div className={styles.inputWrapper}>
-                                <select 
+                                <select
                                     value={tenantForm.city}
                                     onChange={e => setTenantForm({...tenantForm, city: e.target.value})}
                                     className={styles.input}
@@ -397,7 +395,6 @@ export default function PerfilPage() {
                                     <option value="">
                                         {!tenantForm.state ? 'Selecione o estado primeiro' : (cityLoading ? 'Carregando...' : 'Selecione a cidade...')}
                                     </option>
-                                    {/* Caso a cidade já venha do banco e não esteja na lista inicial */}
                                     {tenantForm.city && !cities.includes(tenantForm.city) && (
                                         <option value={tenantForm.city}>{tenantForm.city}</option>
                                     )}
@@ -408,11 +405,56 @@ export default function PerfilPage() {
                                 {cityLoading && <Loader2 className={styles.spinner} size={18} />}
                             </div>
                         </div>
+                        <div className={styles.field}>
+                            <label>CEP</label>
+                            <input
+                                type="text"
+                                value={tenantForm.cep ? tenantForm.cep.replace(/(\d{5})(\d)/, '$1-$2') : ''}
+                                onChange={e => setTenantForm({...tenantForm, cep: e.target.value.replace(/\D/g, '').substring(0, 8)})}
+                                placeholder="00000-000"
+                            />
+                        </div>
+                        <div className={styles.field} style={{ gridColumn: 'span 2' }}>
+                            <label>Logradouro / Rua</label>
+                            <input
+                                type="text"
+                                value={tenantForm.address}
+                                onChange={e => setTenantForm({...tenantForm, address: e.target.value})}
+                                placeholder="Digite o nome da rua..."
+                            />
+                        </div>
+                        <div className={styles.field}>
+                            <label>Número</label>
+                            <input
+                                type="text"
+                                value={tenantForm.number}
+                                onChange={e => setTenantForm({...tenantForm, number: e.target.value})}
+                                placeholder="Digite o número..."
+                            />
+                        </div>
+                        <div className={styles.field}>
+                            <label>Bairro</label>
+                            <input
+                                type="text"
+                                value={tenantForm.neighborhood}
+                                onChange={e => setTenantForm({...tenantForm, neighborhood: e.target.value})}
+                                placeholder="Digite o bairro..."
+                            />
+                        </div>
+                        <div className={styles.field} style={{ gridColumn: 'span 2' }}>
+                            <label>Complemento (opcional)</label>
+                            <input
+                                type="text"
+                                value={tenantForm.complement}
+                                onChange={e => setTenantForm({...tenantForm, complement: e.target.value})}
+                                placeholder="Ex: Sala 101, Ao lado do mercado..."
+                            />
+                        </div>
                     </div>
 
                     {tenant ? (
                         <button className={styles.saveBtn} onClick={handleUpdateTenant} disabled={saving}>
-                            {saving ? 'Salvando...' : 'Atualizar Dados da Empresa'}
+                            {saving ? 'Salvando...' : 'Salvar Dados da Empresa'}
                         </button>
                     ) : (
                         <button className={styles.createTenantBtn} onClick={handleCreateTenant} disabled={saving}>

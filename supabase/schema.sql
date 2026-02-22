@@ -32,7 +32,17 @@ CREATE TABLE IF NOT EXISTS tenants (
   business_type TEXT CHECK (business_type IN ('PF', 'PJ')),
   document TEXT,
   main_module TEXT CHECK (main_module IN ('hospedagem', 'alugueis', 'vendas')),
-  
+
+  -- Endereço Completo
+  cep TEXT,
+  address TEXT,
+  number TEXT,
+  neighborhood TEXT,
+  complement TEXT,
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8),
+  address_completed BOOLEAN DEFAULT FALSE,
+
   subscription_plan TEXT NOT NULL DEFAULT 'trial',
   max_spaces INTEGER NOT NULL DEFAULT 1,
   trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '15 days'),

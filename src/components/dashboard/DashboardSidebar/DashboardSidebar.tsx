@@ -14,7 +14,7 @@ type NavItem = {
 };
 
 const ALL_LINKS: NavItem[] = [
-    { href: '/dashboard', label: 'Visão Geral', icon: '📊' },
+    { href: '/dashboard', label: 'Home', icon: '📊' },
     { href: '/dashboard/espacos', label: 'Meus Espaços', icon: '🏠' },
     { href: '/dashboard/novo-espaco', label: 'Novo Espaço', icon: '➕' },
     { href: '/dashboard/reservas', label: 'Reservas', icon: '📅', modules: ['hospedagem'] },

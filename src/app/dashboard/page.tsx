@@ -1,87 +1,102 @@
-import { createClient } from '@/lib/supabase/server';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
-export const metadata = {
-    title: 'Dashboard — Espaço Z',
-    description: 'Painel do anunciante no Espaço Z.',
-};
+export default function DashboardPage() {
+    const router = useRouter();
+    const [profile, setProfile] = useState<any>(null);
+    const [tenant, setTenant] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-export default async function DashboardPage() {
-    const supabase = await createClient();
-    const { data, error: authError } = await supabase.auth.getUser();
-    const user = data?.user;
+    const [spacesCount, setSpacesCount] = useState<number>(0);
+    const [activeCount, setActiveCount] = useState<number>(0);
 
-    if (authError || !user) {
+    useEffect(() => {
+        async function fetchData() {
+            setLoading(true);
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
+            // 1. Busca o perfil
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('*, tenants(*)')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profileData) {
+                setProfile(profileData);
+                
+                // Se o join falhou ou não existe vínculo no profile, tenta buscar tenant diretamente
+                if (profileData.tenants) {
+                    setTenant(profileData.tenants);
+                } else {
+                    const { data: tenantData } = await supabase
+                        .from('tenants')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+                    
+                    if (tenantData) {
+                        setTenant(tenantData);
+                    }
+                }
+            } else {
+                // Caso não tenha perfil (raro), tenta buscar tenant diretamente
+                const { data: tenantData } = await supabase
+                    .from('tenants')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                
+                if (tenantData) {
+                    setTenant(tenantData);
+                }
+            }
+            setLoading(false);
+        }
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        async function fetchStats() {
+            if (!tenant?.id || tenant.id === 'null') return;
+
+            const supabase = createClient();
+            const { count } = await supabase
+                .from('listings')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', tenant.id);
+
+            const { count: active } = await supabase
+                .from('listings')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', tenant.id)
+                .eq('status', 'ativo');
+
+            setSpacesCount(count || 0);
+            setActiveCount(active || 0);
+        }
+        fetchStats();
+    }, [tenant]);
+
+    if (loading) {
         return (
             <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <h1>Erro</h1>
-                <p>Usuário não autenticado.</p>
+                <p>Carregando...</p>
             </div>
         );
     }
 
-    // Profile + Tenant
-    const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*, tenants(*)')
-        .eq('user_id', user.id)
-        .single();
-
-    if (profileError) {
-        console.error('[Dashboard] Erro ao buscar profile:', profileError);
-        return (
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <h1>Erro</h1>
-                <p>Não foi possível carregar seus dados.</p>
-            </div>
-        );
-    }
-
-    const tenant = profile?.tenants;
     const mainModule = tenant?.main_module ?? 'hospedagem';
-
-    // Se não tem tenant, mostrar aviso para completar cadastro
-    if (!tenant) {
-        return (
-            <div className={styles.container}>
-                <header className={styles.header}>
-                    <div>
-                        <h1 className={styles.title}>Painel do Anunciante</h1>
-                        <p className={styles.welcome}>
-                            Bem-vindo de volta, <strong>{profile?.full_name}</strong>
-                        </p>
-                    </div>
-                </header>
-
-                <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-color)', borderRadius: '16px', margin: '2rem 0' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</div>
-                    <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Quase lá!</h2>
-                    <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 2rem' }}>
-                        Para começar a anunciar seus espaços, precisamos que você complete as informações da sua empresa ou perfil profissional.
-                    </p>
-                    <Link href="/dashboard/perfil" className={styles.createBtn} style={{ padding: '0.8rem 2rem' }}>
-                        Completar meu Perfil
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
-    // Stats (V3)
-    const { count: spacesCount, error: spacesError } = (tenant?.id && tenant.id !== 'null') ? await supabase
-        .from('listings')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', tenant.id) : { count: 0, error: null };
-
-    const { count: activeCount, error: activeError } = (tenant?.id && tenant.id !== 'null') ? await supabase
-        .from('listings')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', tenant.id)
-        .eq('status', 'ativo') : { count: 0, error: null };
-
-    if (spacesError) console.error('[Dashboard] Erro ao buscar listings:', spacesError);
-    if (activeError) console.error('[Dashboard] Erro ao buscar active listings:', activeError);
 
     // Module-specific labels
     const moduleConfig: Record<string, { icon: string; label: string; color: string; lightColor: string }> = {
